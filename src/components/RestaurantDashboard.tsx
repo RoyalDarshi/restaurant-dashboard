@@ -414,7 +414,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
       </h3>
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={salesByProductDescription}>
+          <BarChart data={salesByProductDescription.slice(0, 10)}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
             <XAxis
               dataKey="name"
@@ -453,9 +453,9 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) =>
-                percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ""
-              }
+              // label={({ name, percent }) =>
+              //   percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ""
+              // }
               outerRadius={100}
               dataKey="value"
             >
@@ -521,9 +521,9 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) =>
-                percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ""
-              }
+              // label={({ name, percent }) =>
+              //   percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ""
+              // }
               outerRadius={100}
               dataKey="value"
             >
@@ -590,9 +590,9 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) =>
-                percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ""
-              }
+              // label={({ name, percent }) =>
+              //   percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ""
+              // }
               outerRadius={100}
               dataKey="value"
             >
