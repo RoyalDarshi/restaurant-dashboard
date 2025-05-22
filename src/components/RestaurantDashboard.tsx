@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   LineChart,
   Line,
@@ -42,9 +42,28 @@ const COLORS = [
   "#A8A29E", // Stone-500
 ];
 
-// Helper to get date string in YYYY-MM-DD format
-const getDateString = (timestamp: number) => {
-  const date = new Date(timestamp);
+// Helper function for Indian Rupee formatting (Lakhs and Crores)
+const formatIndianCurrency = (value) => {
+  if (value === null || value === undefined) {
+    return "N/A"; // Handle null or undefined values gracefully
+  }
+  if (value >= 10000000) {
+    return `₹${(value / 10000000).toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+    })} Cr`;
+  } else if (value >= 100000) {
+    return `₹${(value / 100000).toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+    })} L`;
+  } else {
+    return `₹${value.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+};
+// Helper to get date string inYYYY-MM-DD format
+const getFormattedDate = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -53,7 +72,7 @@ const getDateString = (timestamp: number) => {
 
 // Type definitions for data
 interface Transaction {
-  id: string;
+  id: number;
   restaurantId: string;
   productId: string;
   productName: string;
@@ -62,23 +81,51 @@ interface Transaction {
   timestamp: number;
   amount: number;
   quantity: number;
-  itemFamilyGroup?: string; // Optional, as it's new
-  itemDayPart?: string; // Optional, as it's new
+  itemFamilyGroup: string;
+  itemDayPart: string;
 }
 
-interface MockDataOptions {
-  restaurants: string[];
-  products: { item_code: string; item_description: string }[];
-  machines: string[];
-  transactionTypes: string[];
-  itemFamilyGroups?: string[]; // Optional, as it's new
-  itemDayParts?: string[]; // Optional, as it's new
+interface FilterOption {
+  id: string;
+  name: string;
 }
 
-// Helper to format numbers as currency
-const formatCurrency = (value: number) => `₹${value.toFixed(2)}`;
+// Reusable Card Component
+interface CardProps {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  description?: string;
+  color?: string;
+}
 
-// SummaryCards Component
+const Card: React.FC<CardProps> = ({
+  title,
+  value,
+  icon,
+  description,
+  color = "text-indigo-500",
+}) => (
+  <div className="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
+    <div
+      className={`p-3 rounded-full bg-opacity-20 ${color.replace(
+        "text-",
+        "bg-"
+      )}`}
+    >
+      {icon}
+    </div>
+    <div>
+      <p className="text-gray-500 text-sm">{title}</p>
+      <p className="text-2xl font-bold text-gray-800">{value}</p>
+      {description && (
+        <p className="text-gray-400 text-xs mt-1">{description}</p>
+      )}
+    </div>
+  </div>
+);
+
+// Summary Cards Component
 interface SummaryCardsProps {
   totalSales: number;
   totalOrders: number;
@@ -94,53 +141,39 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
   avgSalesPerMachine,
   selectedTimePeriod,
 }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
-    <div className="bg-white rounded-xl shadow-lg p-6 flex items-center justify-between transition-transform duration-200 hover:scale-[1.02]">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-700">Total Sales</h3>
-        <p className="text-4xl font-bold text-indigo-600 mt-2">
-          {formatCurrency(totalSales)}
-        </p>
-        <p className="text-sm text-gray-500 mt-1">For {selectedTimePeriod}</p>
-      </div>
-      <TrendingUp className="h-10 w-10 text-indigo-400 opacity-75" />
-    </div>
-    <div className="bg-white rounded-xl shadow-lg p-6 flex items-center justify-between transition-transform duration-200 hover:scale-[1.02]">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-700">Total Orders</h3>
-        <p className="text-4xl font-bold text-emerald-600 mt-2">
-          {totalOrders}
-        </p>
-        <p className="text-sm text-gray-500 mt-1">For {selectedTimePeriod}</p>
-      </div>
-      <BarChart2 className="h-10 w-10 text-emerald-400 opacity-75" />
-    </div>
-    <div className="bg-white rounded-xl shadow-lg p-6 flex items-center justify-between transition-transform duration-200 hover:scale-[1.02]">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-700">Avg Order Value</h3>
-        <p className="text-4xl font-bold text-purple-600 mt-2">
-          {formatCurrency(avgOrderValue)}
-        </p>
-        <p className="text-sm text-gray-500 mt-1">For {selectedTimePeriod}</p>
-      </div>
-      <PieChartIcon className="h-10 w-10 text-purple-400 opacity-75" />
-    </div>
-    <div className="bg-white rounded-xl shadow-lg p-6 flex items-center justify-between transition-transform duration-200 hover:scale-[1.02]">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-700">
-          Avg Sales / Machine
-        </h3>
-        <p className="text-4xl font-bold text-blue-600 mt-2">
-          {formatCurrency(avgSalesPerMachine)}
-        </p>
-        <p className="text-sm text-gray-500 mt-1">For {selectedTimePeriod}</p>
-      </div>
-      <HardDrive className="h-10 w-10 text-blue-400 opacity-75" />
-    </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <Card
+      title="Total Sales"
+      value={formatIndianCurrency(totalSales)} // Updated to formatIndianCurrency
+      icon={<TrendingUp className="text-indigo-500" />}
+      description={`Sales ${selectedTimePeriod}`}
+      color="text-indigo-500"
+    />
+    <Card
+      title="Total Orders"
+      value={totalOrders.toLocaleString()}
+      icon={<ShoppingBag className="text-emerald-500" />}
+      description={`Orders ${selectedTimePeriod}`}
+      color="text-emerald-500"
+    />
+    <Card
+      title="Average Order Value"
+      value={formatIndianCurrency(avgOrderValue)} // Updated to formatIndianCurrency
+      icon={<Utensils className="text-amber-500" />}
+      description={`Avg. per order ${selectedTimePeriod}`}
+      color="text-amber-500"
+    />
+    <Card
+      title="Avg. Sales/Machine"
+      value={formatIndianCurrency(avgSalesPerMachine)} // Updated to formatIndianCurrency
+      icon={<HardDrive className="text-violet-500" />}
+      description={`Avg. per machine ${selectedTimePeriod}`}
+      color="text-violet-500"
+    />
   </div>
 );
 
-// SalesCharts Component
+// Sales Charts Component
 interface SalesChartsProps {
   dailySales: { name: string; sales: number }[];
   hourlySales: { name: string; sales: number }[];
@@ -156,244 +189,117 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
   salesByProduct,
   selectedRestaurant,
 }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-    {/* Daily Sales Trend */}
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <LineChart className="mr-2 h-6 w-6 text-indigo-500" /> Daily Sales Trend
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h3 className="text-lg font-semibold mb-4 text-gray-700">
+        Daily Sales Trend
       </h3>
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={dailySales}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis
-              dataKey="name"
-              angle={-15}
-              textAnchor="end"
-              height={40}
-              stroke="#555"
-            />
-            <YAxis tickFormatter={formatCurrency} stroke="#555" />
-            <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              labelFormatter={(label: string) => `Date: ${label}`}
-              wrapperStyle={{
-                borderRadius: "8px",
-                boxShadow: "0px 0px 10px rgba(0,0,0,0.1)",
-              }}
-            />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="sales"
-              name="Sales"
-              stroke={COLORS[0]}
-              strokeWidth={3}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart
+          data={dailySales}
+          margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+          <XAxis dataKey="name" stroke="#666" />
+          <YAxis stroke="#666" />
+          <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+          <Legend />
+          <Line
+            type="monotone"
+            dataKey="sales"
+            stroke="#6366F1"
+            strokeWidth={2}
+            dot={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
 
-    {/* Hourly Sales */}
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <Clock className="mr-2 h-6 w-6 text-emerald-500" /> Hourly Sales
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h3 className="text-lg font-semibold mb-4 text-gray-700">
+        Hourly Sales Trend
       </h3>
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={hourlySales}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis
-              dataKey="name"
-              angle={-15}
-              textAnchor="end"
-              height={40}
-              stroke="#555"
-            />
-            <YAxis tickFormatter={formatCurrency} stroke="#555" />
-            <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              labelFormatter={(label: string) => `Hour: ${label}`}
-              wrapperStyle={{
-                borderRadius: "8px",
-                boxShadow: "0px 0px 10px rgba(0,0,0,0.1)",
-              }}
-            />
-            <Legend />
-            <Bar dataKey="sales" name="Sales" fill={COLORS[1]} barSize={25} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart
+          data={hourlySales}
+          margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+          <XAxis dataKey="name" stroke="#666" />
+          <YAxis stroke="#666" />
+          <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+          <Legend />
+          <Bar dataKey="sales" fill="#10B981" />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
 
-    {/* Sales by Restaurant (Pie Chart) */}
-    {selectedRestaurant === "all" && (
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <PieChartIcon className="mr-2 h-6 w-6 text-amber-500" /> Sales by
-          Restaurant
+    {selectedRestaurant === "all" && salesByRestaurant.length > 0 && (
+      <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
+        <h3 className="text-lg font-semibold mb-4 text-gray-700">
+          Sales by Restaurant
         </h3>
-        <div className="h-72 flex items-center justify-center">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={salesByRestaurant}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ""
-                }
-                outerRadius={100}
-                dataKey="value"
-              >
-                {salesByRestaurant.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                    stroke={COLORS[index % COLORS.length]}
-                    strokeWidth={2}
-                  />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={salesByRestaurant}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={100}
+              fill="#8884d8"
+              label={({ name, percent }) =>
+                `${name} ${(percent * 100).toFixed(0)}%`
+              }
+            >
+              {salesByRestaurant.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value: number) => formatIndianCurrency(value)}
+            />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
       </div>
     )}
 
-    {/* Sales by Product (Top 5) */}
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <Coffee className="mr-2 h-6 w-6 text-red-500" /> Top Products by Sales
-      </h3>
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={salesByProduct.slice(0, 5)} layout="vertical">
+    {salesByProduct.length > 0 && (
+      <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
+        <h3 className="text-lg font-semibold mb-4 text-gray-700">
+          Top 5 Products by Sales
+        </h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            layout="vertical"
+            data={salesByProduct}
+            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis type="number" tickFormatter={formatCurrency} stroke="#555" />
-            <YAxis
-              type="category"
-              dataKey="name" // Use 'name' which holds product_description
-              width={100}
-              stroke="#555"
+            <XAxis
+              type="number"
+              stroke="#666"
+              formatter={(value: number) => formatIndianCurrency(value)}
             />
+            <YAxis type="category" dataKey="name" stroke="#666" width={80} />
             <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              wrapperStyle={{
-                borderRadius: "8px",
-                boxShadow: "0px 0px 10px rgba(0,0,0,0.1)",
-              }}
+              formatter={(value: number) => formatIndianCurrency(value)}
             />
             <Legend />
-            <Bar dataKey="value" name="Sales" fill={COLORS[3]} barSize={25} />
+            <Bar dataKey="value" fill="#EF4444" />
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </div>
-
-    {/* Area Map Placeholder */}
-    <div className="bg-white rounded-xl shadow-lg p-6 lg:col-span-2">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <MapPin className="mr-2 h-6 w-6 text-blue-500" /> Restaurant Locations /
-        Sales Distribution
-      </h3>
-      <div className="h-96 bg-gray-50 border border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 text-lg">
-        <p>
-          Placeholder for Area Map (e.g., showing sales distribution by region)
-        </p>
-      </div>
-    </div>
+    )}
   </div>
 );
 
-// TransactionsTable Component
-interface TransactionsTableProps {
-  filteredTransactions: Transaction[];
-}
-
-const TransactionsTable: React.FC<TransactionsTableProps> = ({
-  filteredTransactions,
-}) => (
-  <div className="p-6">
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-      <h3 className="text-xl font-semibold text-gray-800 p-6 border-b border-gray-200">
-        All Transactions
-      </h3>
-      <div className="overflow-x-auto">
-        <div className="max-h-96 overflow-y-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0 z-10">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Restaurant
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Product
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Machine
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Time
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Amount
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTransactions.map((transaction) => (
-                <tr
-                  key={transaction.id}
-                  className="hover:bg-gray-50 transition-colors duration-150 ease-in-out"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600">
-                    {transaction.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {transaction.restaurantId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {transaction.productName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {transaction.machineId || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {transaction.transactionType}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(transaction.timestamp).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                    {formatCurrency(transaction.amount)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      {filteredTransactions.length === 0 && (
-        <div className="p-6 text-center text-gray-500 text-base">
-          No transactions found with the current filters.
-        </div>
-      )}
-    </div>
-  </div>
-);
-
-// ProductCharts Component
+// Product Charts Component
 interface ProductChartsProps {
   salesByProductDescription: { name: string; value: number }[];
   salesByItemFamilyGroup: { name: string; value: number }[];
@@ -405,264 +311,401 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
   salesByItemFamilyGroup,
   salesByItemDayPart,
 }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-    {/* Sales by Product Description - Bar Chart */}
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <Coffee className="mr-2 h-6 w-6 text-red-500" /> Sales by Product
-        Description (Bar)
-      </h3>
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={salesByProductDescription.slice(0, 10)}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis
-              dataKey="name"
-              angle={-15}
-              textAnchor="end"
-              height={40}
-              interval={0} // Ensure all labels are shown
-              stroke="#555"
-            />
-            <YAxis tickFormatter={formatCurrency} stroke="#555" />
-            <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              wrapperStyle={{
-                borderRadius: "8px",
-                boxShadow: "0px 0px 10px rgba(0,0,0,0.1)",
-              }}
-            />
-            <Legend />
-            <Bar dataKey="value" name="Sales" fill={COLORS[3]} barSize={25} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-
-    {/* Sales by Product Description - Pie Chart */}
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <PieChartIcon className="mr-2 h-6 w-6 text-pink-500" /> Sales by Product
-        Description (Pie)
-      </h3>
-      <div className="h-72 flex items-center justify-center">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={salesByProductDescription}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              // label={({ name, percent }) =>
-              //   percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ""
-              // }
-              outerRadius={100}
-              dataKey="value"
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    {salesByProductDescription.length > 0 && (
+      <>
+        <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Product Description (Bar Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              layout="vertical"
+              data={salesByProductDescription.slice(0, 10)} // Show only top 5
+              margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
             >
-              {salesByProductDescription.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                  stroke={COLORS[index % COLORS.length]}
-                  strokeWidth={2}
-                />
-              ))}
-            </Pie>
-            <Tooltip formatter={(value: number) => formatCurrency(value)} />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <YAxis type="category" dataKey="name" stroke="#666" width={150} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+              <Bar dataKey="value" fill="#8B5CF6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Product Description (Pie Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={salesByProductDescription}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+                // label={({ name, percent }) =>
+                //   `${name} ${(percent * 100).toFixed(0)}%`
+                // }
+              >
+                {salesByProductDescription.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              {/* <Legend /> */}
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </>
+    )}
 
-    {/* Sales by Item Family Group - Bar Chart */}
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <Utensils className="mr-2 h-6 w-6 text-violet-500" /> Sales by Item
-        Family Group (Bar)
-      </h3>
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={salesByItemFamilyGroup}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis
-              dataKey="name"
-              angle={-15}
-              textAnchor="end"
-              height={40}
-              interval={0}
-              stroke="#555"
-            />
-            <YAxis tickFormatter={formatCurrency} stroke="#555" />
-            <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              wrapperStyle={{
-                borderRadius: "8px",
-                boxShadow: "0px 0px 10px rgba(0,0,0,0.1)",
-              }}
-            />
-            <Legend />
-            <Bar dataKey="value" name="Sales" fill={COLORS[4]} barSize={25} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-
-    {/* Sales by Item Family Group - Pie Chart */}
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <PieChartIcon className="mr-2 h-6 w-6 text-cyan-500" /> Sales by Item
-        Family Group (Pie)
-      </h3>
-      <div className="h-72 flex items-center justify-center">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
+    {salesByItemFamilyGroup.length > 0 && (
+      <>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Item Family Group (Bar Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              layout="vertical"
               data={salesByItemFamilyGroup}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              // label={({ name, percent }) =>
-              //   percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ""
-              // }
-              outerRadius={100}
-              dataKey="value"
+              margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
             >
-              {salesByItemFamilyGroup.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                  stroke={COLORS[index % COLORS.length]}
-                  strokeWidth={2}
-                />
-              ))}
-            </Pie>
-            <Tooltip formatter={(value: number) => formatCurrency(value)} />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <YAxis type="category" dataKey="name" stroke="#666" width={150} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+              <Bar dataKey="value" fill="#06B6D4" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Item Family Group (Pie Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={salesByItemFamilyGroup}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+                // label={({ name, percent }) =>
+                //   `${name} ${(percent * 100).toFixed(0)}%`
+                // }
+              >
+                {salesByItemFamilyGroup.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </>
+    )}
 
-    {/* Sales by Item Day Part - Bar Chart */}
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <Clock className="mr-2 h-6 w-6 text-emerald-500" /> Sales by Item Day
-        Part (Bar)
-      </h3>
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={salesByItemDayPart}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis
-              dataKey="name"
-              angle={-15}
-              textAnchor="end"
-              height={40}
-              interval={0}
-              stroke="#555"
-            />
-            <YAxis tickFormatter={formatCurrency} stroke="#555" />
-            <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              wrapperStyle={{
-                borderRadius: "8px",
-                boxShadow: "0px 0px 10px rgba(0,0,0,0.1)",
-              }}
-            />
-            <Legend />
-            <Bar dataKey="value" name="Sales" fill={COLORS[1]} barSize={25} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-
-    {/* Sales by Item Day Part - Pie Chart */}
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <PieChartIcon className="mr-2 h-6 w-6 text-indigo-500" /> Sales by Item
-        Day Part (Pie)
-      </h3>
-      <div className="h-72 flex items-center justify-center">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
+    {salesByItemDayPart.length > 0 && (
+      <>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Item Day Part (Bar Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              layout="vertical"
               data={salesByItemDayPart}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              // label={({ name, percent }) =>
-              //   percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ""
-              // }
-              outerRadius={100}
-              dataKey="value"
+              margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
             >
-              {salesByItemDayPart.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                  stroke={COLORS[index % COLORS.length]}
-                  strokeWidth={2}
-                />
-              ))}
-            </Pie>
-            <Tooltip formatter={(value: number) => formatCurrency(value)} />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <YAxis type="category" dataKey="name" stroke="#666" width={150} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+              <Bar dataKey="value" fill="#EC4899" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Item Day Part (Pie Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={salesByItemDayPart}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+                // label={({ name, percent }) =>
+                //   `${name} ${(percent * 100).toFixed(0)}%`
+                // }
+              >
+                {salesByItemDayPart.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </>
+    )}
   </div>
 );
 
+// Transactions Table Component
+interface TransactionsTableProps {
+  filteredTransactions: Transaction[];
+}
+
+const TransactionsTable: React.FC<TransactionsTableProps> = ({
+  filteredTransactions,
+}) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredTransactions.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+      <h3 className="text-lg font-semibold mb-4 text-gray-700">
+        Transactions Detail
+      </h3>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                ID
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Date
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Restaurant
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Product
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Machine
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Type
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Amount
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quantity
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {currentItems.map((transaction) => (
+              <tr key={transaction.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {transaction.id}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {new Date(transaction.timestamp).toLocaleString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.restaurantId}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.productName}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.machineId}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.transactionType}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {formatIndianCurrency(transaction.amount)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.quantity}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <nav
+          className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+          aria-label="Pagination"
+        >
+          <button
+            onClick={() => paginate(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => paginate(i + 1)}
+              className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${
+                currentPage === i + 1
+                  ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
+                  : "text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => paginate(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </nav>
+      </div>
+    </div>
+  );
+};
+
+// Main App Component
 export default function App() {
-  const [currentView, setCurrentView] = useState("sales"); // 'sales' or 'product'
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState("today");
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState("last30days");
   const [selectedRestaurant, setSelectedRestaurant] = useState("all");
-  const [selectedProduct, setSelectedProduct] = useState("all"); // Stores item_code
+  const [selectedProduct, setSelectedProduct] = useState("all");
   const [selectedMachine, setSelectedMachine] = useState("all");
   const [selectedTransactionType, setSelectedTransactionType] = useState("all");
+  const [currentView, setCurrentView] = useState("sales"); // 'sales' or 'product'
+
+  const [restaurants, setRestaurants] = useState<FilterOption[]>([]);
+  const [products, setProducts] = useState<FilterOption[]>([]);
+  const [machines, setMachines] = useState<string[]>([]);
+  const [transactionTypes, setTransactionTypes] = useState<string[]>([]);
+
   const [filteredTransactions, setFilteredTransactions] = useState<
     Transaction[]
   >([]);
-  const [mockDataOptions, setMockDataOptions] = useState<MockDataOptions>({
-    restaurants: [],
-    products: [], // Now an array of { item_code, item_description }
-    machines: [],
-    transactionTypes: [],
-    itemFamilyGroups: [], // Initialize new options
-    itemDayParts: [], // Initialize new options
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch mock data options on component mount
+  // New states for aggregated data
+  const [summaryData, setSummaryData] = useState({
+    totalSales: 0,
+    totalOrders: 0,
+    avgOrderValue: 0,
+    avgSalesPerMachine: 0,
+  });
+  const [dailySalesData, setDailySalesData] = useState<
+    { name: string; sales: number }[]
+  >([]);
+  const [hourlySalesData, setHourlySalesData] = useState<
+    { name: string; sales: number }[]
+  >([]);
+  const [salesByRestaurantData, setSalesByRestaurantData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesByProductData, setSalesByProductData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesByProductDescriptionData, setSalesByProductDescriptionData] =
+    useState<{ name: string; value: number }[]>([]);
+  const [salesByItemFamilyGroupData, setSalesByItemFamilyGroupData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesByItemDayPartData, setSalesByItemDayPartData] = useState<
+    { name: string; value: number }[]
+  >([]);
+
+  // Fetch initial filter options
   useEffect(() => {
-    const fetchMockOptions = async () => {
+    const fetchFilterOptions = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/mock-data`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data: MockDataOptions = await response.json();
-        setMockDataOptions({
-          restaurants: data.restaurants,
-          products: data.products,
-          machines: data.machines,
-          transactionTypes: data.transactionTypes,
-          itemFamilyGroups: data.itemFamilyGroups || [],
-          itemDayParts: data.itemDayParts || [],
-        });
+        const data = await response.json();
+        setRestaurants(data.restaurants);
+        setProducts(data.products);
+        setMachines(data.machines);
+        setTransactionTypes(data.transactionTypes);
       } catch (err: any) {
-        console.error("Failed to fetch mock data options:", err);
-        setError("Failed to load filter options: " + err.message);
+        console.error("Failed to fetch filter options:", err);
+        setError("Failed to load filter options. " + err.message);
       }
     };
-    fetchMockOptions();
-  }, []); // Run once on mount
+    fetchFilterOptions();
+  }, []);
 
-  // Fetch filtered transactions from backend
+  // Clear selected product when switching to product view
   useEffect(() => {
-    const fetchTransactions = async () => {
+    if (currentView === "product") {
+      setSelectedProduct("all");
+    }
+  }, [currentView]);
+
+  // Fetch dashboard data based on filters and current view
+  useEffect(() => {
+    const fetchAllDashboardData = async () => {
       setLoading(true);
       setError(null);
       try {
@@ -674,400 +717,379 @@ export default function App() {
           transactionType: selectedTransactionType,
         }).toString();
 
-        const response = await fetch(`${API_BASE_URL}/sales?${params}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        // --- Fetch Summary Data ---
+        const summaryResponse = await fetch(
+          `${API_BASE_URL}/sales/summary?${params}`
+        );
+        if (!summaryResponse.ok)
+          throw new Error(`Summary fetch failed: ${summaryResponse.status}`);
+        const summary = await summaryResponse.json();
+        setSummaryData(summary);
+
+        // --- Fetch Sales View Charts Data ---
+        if (currentView === "sales") {
+          const dailyResponse = await fetch(
+            `${API_BASE_URL}/sales/daily-trend?${params}`
+          );
+          if (!dailyResponse.ok)
+            throw new Error(
+              `Daily sales fetch failed: ${dailyResponse.status}`
+            );
+          setDailySalesData(await dailyResponse.json());
+
+          const hourlyResponse = await fetch(
+            `${API_BASE_URL}/sales/hourly-trend?${params}`
+          );
+          if (!hourlyResponse.ok)
+            throw new Error(
+              `Hourly sales fetch failed: ${hourlyResponse.status}`
+            );
+          setHourlySalesData(await hourlyResponse.json());
+
+          // Sales by Restaurant is only fetched if 'All Restaurants' is selected
+          if (selectedRestaurant === "all") {
+            // Ensure restaurantId is not passed for salesByRestaurant endpoint if 'all'
+            const paramsForRestaurantChart = new URLSearchParams({
+              timePeriod: selectedTimePeriod,
+              productId: selectedProduct,
+              machineId: selectedMachine,
+              transactionType: selectedTransactionType,
+            }).toString();
+            const byRestaurantResponse = await fetch(
+              `${API_BASE_URL}/sales/by-restaurant?${paramsForRestaurantChart}`
+            );
+            if (!byRestaurantResponse.ok)
+              throw new Error(
+                `Sales by restaurant fetch failed: ${byRestaurantResponse.status}`
+              );
+            setSalesByRestaurantData(await byRestaurantResponse.json());
+          } else {
+            setSalesByRestaurantData([]); // Clear data if a specific restaurant is chosen
+          }
+
+          const byProductResponse = await fetch(
+            `${API_BASE_URL}/sales/by-product?${params}`
+          );
+          if (!byProductResponse.ok)
+            throw new Error(
+              `Sales by product fetch failed: ${byProductResponse.status}`
+            );
+          setSalesByProductData(await byProductResponse.json());
+        } else {
+          // Clear sales view data when not in sales view
+          setDailySalesData([]);
+          setHourlySalesData([]);
+          setSalesByRestaurantData([]);
+          setSalesByProductData([]);
         }
-        const data: Transaction[] = await response.json();
-        setFilteredTransactions(data);
-        console.log("Fetched and Filtered Transactions:", data); // DEBUG LOG
+
+        // --- Fetch Product View Charts Data ---
+        if (currentView === "product") {
+          const byProductDescResponse = await fetch(
+            `${API_BASE_URL}/product/by-description?${params}`
+          );
+          if (!byProductDescResponse.ok)
+            throw new Error(
+              `Sales by product description fetch failed: ${byProductDescResponse.status}`
+            );
+          setSalesByProductDescriptionData(await byProductDescResponse.json());
+
+          const byFamilyGroupResponse = await fetch(
+            `${API_BASE_URL}/product/by-family-group?${params}`
+          );
+          if (!byFamilyGroupResponse.ok)
+            throw new Error(
+              `Sales by item family group fetch failed: ${byFamilyGroupResponse.status}`
+            );
+          setSalesByItemFamilyGroupData(await byFamilyGroupResponse.json());
+
+          const byDayPartResponse = await fetch(
+            `${API_BASE_URL}/product/by-day-part?${params}`
+          );
+          if (!byDayPartResponse.ok)
+            throw new Error(
+              `Sales by item day part fetch failed: ${byDayPartResponse.status}`
+            );
+          setSalesByItemDayPartData(await byDayPartResponse.json());
+        } else {
+          // Clear product view data when not in product view
+          setSalesByProductDescriptionData([]);
+          setSalesByItemFamilyGroupData([]);
+          setSalesByItemDayPartData([]);
+        }
+
+        // --- Fetch Filtered Transactions (for the table) ---
+        const transactionsResponse = await fetch(
+          `${API_BASE_URL}/sales?${params}`
+        );
+        if (!transactionsResponse.ok)
+          throw new Error(
+            `Transactions fetch failed: ${transactionsResponse.status}`
+          );
+        setFilteredTransactions(await transactionsResponse.json());
       } catch (err: any) {
-        console.error("Failed to fetch transactions:", err);
+        console.error("Failed to fetch dashboard data:", err);
         setError(
           "Failed to load data. Please ensure the backend server is running and configured correctly, and that your database contains data for the selected filters. Error: " +
             err.message
         );
-        setFilteredTransactions([]); // Clear data on error
+        // Clear all data on error
+        setSummaryData({
+          totalSales: 0,
+          totalOrders: 0,
+          avgOrderValue: 0,
+          avgSalesPerMachine: 0,
+        });
+        setDailySalesData([]);
+        setHourlySalesData([]);
+        setSalesByRestaurantData([]);
+        setSalesByProductData([]);
+        setSalesByProductDescriptionData([]);
+        setSalesByItemFamilyGroupData([]);
+        setSalesByItemDayPartData([]);
+        setFilteredTransactions([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchTransactions();
+    fetchAllDashboardData();
   }, [
     selectedTimePeriod,
     selectedRestaurant,
-    selectedProduct, // Dependency for re-fetching when product filter changes
+    selectedProduct,
     selectedMachine,
     selectedTransactionType,
+    currentView, // Crucial dependency for changing views
   ]);
 
-  // Calculate sales by restaurant for pie chart
-  const salesByRestaurant = useMemo(() => {
-    return selectedRestaurant === "all"
-      ? mockDataOptions.restaurants.map((restaurant) => {
-          const sales = filteredTransactions
-            .filter((tx) => tx.restaurantId === restaurant)
-            .reduce((total, tx) => total + tx.amount, 0);
-          return { name: restaurant, value: sales };
-        })
-      : [];
-  }, [filteredTransactions, selectedRestaurant, mockDataOptions.restaurants]);
-
-  // Calculate sales by product (using productName for display)
-  const salesByProduct = useMemo(() => {
-    return mockDataOptions.products
-      .map((productOption) => {
-        // Iterate over the full list of products from options
-        const sales = filteredTransactions
-          .filter((tx) => tx.productId === productOption.item_code) // Filter by item_code
-          .reduce((total, tx) => total + tx.amount, 0);
-        return { name: productOption.item_description, value: sales }; // Display item_description
-      })
-      .sort((a, b) => b.value - a.value);
-  }, [filteredTransactions, mockDataOptions.products]);
-
-  // Calculate hourly sales
-  const hourlySales = useMemo(() => {
-    return Array.from({ length: 14 }, (_, i) => {
-      const hour = i + 8;
-      const hourStart = hour;
-      const hourEnd = hour + 1;
-      const hourFormatted = `${hourStart % 12 || 12}${
-        hourStart < 12 ? "am" : "pm"
-      }-${hourEnd % 12 || 12}${hourEnd < 12 ? "am" : "pm"}`;
-      const sales = filteredTransactions
-        .filter((tx) => new Date(tx.timestamp).getHours() === hour)
-        .reduce((total, tx) => total + tx.amount, 0);
-      return { name: hourFormatted, sales };
-    });
-  }, [filteredTransactions]);
-
-  // Calculate daily sales based on selected time period
-  const dailySales = useMemo(() => {
-    const getDateRange = () => {
-      const now = new Date();
-      let start: Date;
-      let end = new Date(now); // Initialize end with a copy of now
-
-      switch (selectedTimePeriod) {
-        case "today":
-          start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          break;
-        case "yesterday":
-          start = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate() - 1
-          );
-          end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-          break;
-        case "last7days":
-          start = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate() - 6
-          );
-          break;
-        case "thisMonth":
-          start = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        case "last3Months":
-          start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-          break;
-        case "last6Months":
-          start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-          break;
-        case "thisYear":
-          start = new Date(now.getFullYear(), 0, 1);
-          break;
-        default:
-          start = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate() - 29
-          ); // Default to last 30 days if no period
-      }
-      return { start, end };
-    };
-
-    const dailySalesMap: { [key: string]: number } = {};
-    filteredTransactions.forEach((tx) => {
-      const dateStr = getDateString(tx.timestamp);
-      if (!dailySalesMap[dateStr]) dailySalesMap[dateStr] = 0;
-      dailySalesMap[dateStr] += tx.amount;
-    });
-
-    const { start, end } = getDateRange();
-    const days = [];
-    const currentDate = new Date(start);
-    while (currentDate.getTime() <= end.getTime()) {
-      days.push(new Date(currentDate));
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return days.map((day) => {
-      const dateStr = getDateString(day.getTime());
-      const sales = dailySalesMap[dateStr] || 0;
-      return {
-        name: day.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-        sales,
-      };
-    });
-  }, [filteredTransactions, selectedTimePeriod]);
-
-  // Calculate summary metrics
-  const totalSales = useMemo(() => {
-    return filteredTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-  }, [filteredTransactions]);
-
-  const totalOrders = useMemo(() => {
-    return filteredTransactions.length;
-  }, [filteredTransactions]);
-
-  const avgOrderValue = useMemo(() => {
-    return totalOrders > 0 ? totalSales / totalOrders : 0;
-  }, [totalSales, totalOrders]);
-
-  // Calculate Average Sales per Machine (only considering 'Machine' transactions)
-  const avgSalesPerMachine = useMemo(() => {
-    const salesByMachine: {
-      [key: string]: { totalSales: number; transactionCount: number };
-    } = {};
-    filteredTransactions
-      .filter((tx) => tx.transactionType === "Machine" && tx.machineId)
-      .forEach((tx) => {
-        if (!salesByMachine[tx.machineId]) {
-          salesByMachine[tx.machineId] = { totalSales: 0, transactionCount: 0 };
-        }
-        salesByMachine[tx.machineId].totalSales += tx.amount;
-        salesByMachine[tx.machineId].transactionCount += 1;
-      });
-
-    let totalSalesAcrossMachines = 0;
-    let machineCountWithSales = 0;
-    for (const machineId in salesByMachine) {
-      totalSalesAcrossMachines += salesByMachine[machineId].totalSales;
-      machineCountWithSales++;
-    }
-
-    return machineCountWithSales > 0
-      ? totalSalesAcrossMachines / machineCountWithSales
-      : 0;
-  }, [filteredTransactions]);
-
-  // New calculations for Product View charts
-  const salesByProductDescription = useMemo(() => {
-    const dataMap: { [key: string]: number } = {};
-    filteredTransactions.forEach((tx) => {
-      if (tx.productName) {
-        dataMap[tx.productName] = (dataMap[tx.productName] || 0) + tx.amount;
-      }
-    });
-    return Object.entries(dataMap)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [filteredTransactions]);
-
-  const salesByItemFamilyGroup = useMemo(() => {
-    const dataMap: { [key: string]: number } = {};
-    filteredTransactions.forEach((tx) => {
-      if (tx.itemFamilyGroup) {
-        dataMap[tx.itemFamilyGroup] =
-          (dataMap[tx.itemFamilyGroup] || 0) + tx.amount;
-      }
-    });
-    return Object.entries(dataMap)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [filteredTransactions]);
-
-  const salesByItemDayPart = useMemo(() => {
-    const dataMap: { [key: string]: number } = {};
-    filteredTransactions.forEach((tx) => {
-      if (tx.itemDayPart) {
-        dataMap[tx.itemDayPart] = (dataMap[tx.itemDayPart] || 0) + tx.amount;
-      }
-    });
-    return Object.entries(dataMap)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [filteredTransactions]);
-
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 font-sans antialiased">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-extrabold text-gray-800">
-            Restaurant Analytics Dashboard
-          </h1>
-          <div className="text-sm text-gray-500">
-            Last updated: {new Date().toLocaleString()}
-          </div>
+      <header className="bg-white shadow-sm p-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">
+          Restaurant Sales Dashboard
+        </h1>
+        <div className="flex space-x-4">
+          <button
+            onClick={() => setCurrentView("sales")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              currentView === "sales"
+                ? "bg-indigo-600 text-white shadow"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            Sales View
+          </button>
+          <button
+            onClick={() => setCurrentView("product")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              currentView === "product"
+                ? "bg-indigo-600 text-white shadow"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            Product View
+          </button>
         </div>
       </header>
 
-      {/* View Selection Buttons */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm flex gap-4 justify-center">
-        <button
-          className={`px-6 py-3 rounded-lg font-semibold text-lg transition-all duration-200 ${
-            currentView === "sales"
-              ? "bg-indigo-600 text-white shadow-md"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          }`}
-          onClick={() => setCurrentView("sales")}
-        >
-          Sales View
-        </button>
-        <button
-          className={`px-6 py-3 rounded-lg font-semibold text-lg transition-all duration-200 ${
-            currentView === "product"
-              ? "bg-indigo-600 text-white shadow-md"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          }`}
-          onClick={() => setCurrentView("product")}
-        >
-          Product View
-        </button>
-      </div>
-
-      {/* Filter Section */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
-        <div className="flex flex-wrap gap-6 items-center">
-          <div className="flex items-center">
-            <Calendar className="mr-2 h-5 w-5 text-gray-600" />
-            <select
-              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-800 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-              value={selectedTimePeriod}
-              onChange={(e) => setSelectedTimePeriod(e.target.value)}
+      {/* Main Content */}
+      <main className="flex-1 p-6">
+        {/* Filters */}
+        <div className="bg-white p-6 rounded-lg shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div>
+            <label
+              htmlFor="timePeriod"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="last7days">Last 7 Days</option>
-              <option value="thisMonth">This Month</option>
-              <option value="last3Months">Last 3 Months</option>
-              <option value="last6Months">Last 6 Months</option>
-              <option value="thisYear">This Year</option>
-            </select>
-          </div>
-          <div className="flex items-center">
-            <Utensils className="mr-2 h-5 w-5 text-gray-600" />
-            <select
-              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-800 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-              value={selectedRestaurant}
-              onChange={(e) => setSelectedRestaurant(e.target.value)}
-            >
-              <option value="all">All Restaurants</option>
-              {mockDataOptions.restaurants.map((restaurant) => (
-                <option key={restaurant} value={restaurant}>
-                  {restaurant}
-                </option>
-              ))}
-            </select>
-          </div>
-          {currentView === "sales" && ( // Product filter only visible in Sales View
-            <div className="flex items-center">
-              <Coffee className="mr-2 h-5 w-5 text-gray-600" />
+              Time Period
+            </label>
+            <div className="relative">
               <select
-                className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-800 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-                value={selectedProduct}
-                onChange={(e) => setSelectedProduct(e.target.value)}
+                id="timePeriod"
+                value={selectedTimePeriod}
+                onChange={(e) => setSelectedTimePeriod(e.target.value)}
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
               >
-                <option value="all">All Products</option>
-                {mockDataOptions.products.map((product) => (
-                  <option key={product.item_code} value={product.item_code}>
-                    {product.item_description}
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7days">Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+                <option value="thisMonth">This Month</option>
+                <option value="last3Months">Last 3 Months</option>
+                <option value="last6Months">Last 6 Months</option>
+                <option value="thisYear">This Year</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <Calendar className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="restaurant"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Restaurant
+            </label>
+            <div className="relative">
+              <select
+                id="restaurant"
+                value={selectedRestaurant}
+                onChange={(e) => setSelectedRestaurant(e.target.value)}
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+              >
+                <option value="all">All Restaurants</option>
+                {restaurants.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
                   </option>
                 ))}
               </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <MapPin className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+
+          {currentView === "sales" && ( // Conditionally render product filter
+            <div>
+              <label
+                htmlFor="product"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Product
+              </label>
+              <div className="relative">
+                <select
+                  id="product"
+                  value={selectedProduct}
+                  onChange={(e) => setSelectedProduct(e.target.value)}
+                  className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+                >
+                  <option value="all">All Products</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                  <Coffee className="h-5 w-5" />
+                </div>
+              </div>
             </div>
           )}
-          <div className="flex items-center">
-            <HardDrive className="mr-2 h-5 w-5 text-gray-600" />
-            <select
-              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-800 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-              value={selectedMachine}
-              onChange={(e) => setSelectedMachine(e.target.value)}
+
+          <div>
+            <label
+              htmlFor="machine"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
-              <option value="all">All Machines</option>
-              {mockDataOptions.machines.map((machine) => (
-                <option key={machine} value={machine}>
-                  {machine}
-                </option>
-              ))}
-            </select>
+              Machine
+            </label>
+            <div className="relative">
+              <select
+                id="machine"
+                value={selectedMachine}
+                onChange={(e) => setSelectedMachine(e.target.value)}
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+              >
+                <option value="all">All Machines</option>
+                {machines.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <HardDrive className="h-5 w-5" />
+              </div>
+            </div>
           </div>
-          <div className="flex items-center">
-            <ShoppingBag className="mr-2 h-5 w-5 text-gray-600" />
-            <select
-              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-800 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-              value={selectedTransactionType}
-              onChange={(e) => setSelectedTransactionType(e.target.value)}
+
+          <div>
+            <label
+              htmlFor="transactionType"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
-              <option value="all">All Transaction Types</option>
-              {mockDataOptions.transactionTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
+              Transaction Type
+            </label>
+            <div className="relative">
+              <select
+                id="transactionType"
+                value={selectedTransactionType}
+                onChange={(e) => setSelectedTransactionType(e.target.value)}
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+              >
+                <option value="all">All Types</option>
+                {transactionTypes.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <ShoppingBag className="h-5 w-5" />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {loading && (
-        <div className="p-6 text-center text-gray-500 text-lg">
-          Loading data...
-        </div>
-      )}
-      {error && (
-        <div className="p-6 text-center text-red-500 text-lg">{error}</div>
-      )}
+        {loading && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard data...</p>
+          </div>
+        )}
 
-      {!loading && !error && (
-        <>
-          <SummaryCards
-            totalSales={totalSales}
-            totalOrders={totalOrders}
-            avgOrderValue={avgOrderValue}
-            avgSalesPerMachine={avgSalesPerMachine}
-            selectedTimePeriod={selectedTimePeriod}
-          />
+        {error && (
+          <div className="p-6 text-center text-red-500 text-lg">{error}</div>
+        )}
 
-          {currentView === "sales" && (
-            <>
-              <SalesCharts
-                dailySales={dailySales}
-                hourlySales={hourlySales}
-                salesByRestaurant={salesByRestaurant}
-                salesByProduct={salesByProduct}
-                selectedRestaurant={selectedRestaurant}
+        {!loading && !error && (
+          <>
+            {currentView === "sales" && (
+              <>
+                <SummaryCards
+                  totalSales={summaryData.totalSales}
+                  totalOrders={summaryData.totalOrders}
+                  avgOrderValue={summaryData.avgOrderValue}
+                  avgSalesPerMachine={summaryData.avgSalesPerMachine}
+                  selectedTimePeriod={selectedTimePeriod}
+                />
+                <SalesCharts
+                  dailySales={dailySalesData}
+                  hourlySales={hourlySalesData}
+                  salesByRestaurant={salesByRestaurantData}
+                  salesByProduct={salesByProductData}
+                  selectedRestaurant={selectedRestaurant}
+                />
+                <TransactionsTable
+                  filteredTransactions={filteredTransactions}
+                />
+              </>
+            )}
+
+            {currentView === "product" && (
+              <ProductCharts
+                salesByProductDescription={salesByProductDescriptionData}
+                salesByItemFamilyGroup={salesByItemFamilyGroupData}
+                salesByItemDayPart={salesByItemDayPartData}
               />
-              <TransactionsTable filteredTransactions={filteredTransactions} />
-            </>
-          )}
+            )}
+          </>
+        )}
 
-          {currentView === "product" && (
-            <ProductCharts
-              salesByProductDescription={salesByProductDescription}
-              salesByItemFamilyGroup={salesByItemFamilyGroup}
-              salesByItemDayPart={salesByItemDayPart}
-            />
-          )}
-        </>
-      )}
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 px-6 py-4 mt-auto">
-        <div className="text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} Restaurant Analytics Dashboard. All
-          rights reserved.
-        </div>
-      </footer>
+        {/* Footer */}
+        <footer className="bg-white border-t border-gray-200 px-6 py-4 mt-auto">
+          <div className="text-center text-sm text-gray-500">
+            © {new Date().getFullYear()} Restaurant Analytics Dashboard. All
+            rights reserved.
+          </div>
+        </footer>
+      </main>
     </div>
   );
 }
