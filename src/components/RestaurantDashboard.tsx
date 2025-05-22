@@ -1,3 +1,4 @@
+// RestaurantDashboard.tsx
 import { useState, useEffect, useCallback } from "react";
 import {
   LineChart,
@@ -25,6 +26,7 @@ import {
   MapPin,
   HardDrive,
   ShoppingBag,
+  ReceiptText, // Import a new icon for invoices if desired, e.g., ReceiptText from lucide-react
 } from "lucide-react";
 
 // Backend API URL
@@ -43,7 +45,7 @@ const COLORS = [
 ];
 
 // Helper function for Indian Rupee formatting (Lakhs and Crores)
-const formatIndianCurrency = (value) => {
+const formatIndianCurrency = (value: number) => {
   if (value === null || value === undefined) {
     return "N/A"; // Handle null or undefined values gracefully
   }
@@ -130,7 +132,7 @@ interface SummaryCardsProps {
   totalSales: number;
   totalOrders: number;
   avgOrderValue: number;
-  avgSalesPerMachine: number;
+  totalInvoices: number; // Changed from avgSalesPerMachine to totalInvoices
   selectedTimePeriod: string;
 }
 
@@ -138,7 +140,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
   totalSales,
   totalOrders,
   avgOrderValue,
-  avgSalesPerMachine,
+  totalInvoices, // Changed from avgSalesPerMachine to totalInvoices
   selectedTimePeriod,
 }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -164,10 +166,10 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
       color="text-amber-500"
     />
     <Card
-      title="Avg. Sales/Machine"
-      value={formatIndianCurrency(avgSalesPerMachine)} // Updated to formatIndianCurrency
-      icon={<HardDrive className="text-violet-500" />}
-      description={`Avg. per machine ${selectedTimePeriod}`}
+      title="Total GC" // Changed title
+      value={totalInvoices.toLocaleString()} // Changed value to totalInvoices
+      icon={<ReceiptText className="text-violet-500" />} // Changed icon
+      description={`Invoices ${selectedTimePeriod}`} // Changed description
       color="text-violet-500"
     />
   </div>
@@ -652,7 +654,7 @@ export default function App() {
     totalSales: 0,
     totalOrders: 0,
     avgOrderValue: 0,
-    avgSalesPerMachine: 0,
+    totalInvoices: 0, // Changed from avgSalesPerMachine to totalInvoices
   });
   const [dailySalesData, setDailySalesData] = useState<
     { name: string; sales: number }[]
@@ -838,7 +840,7 @@ export default function App() {
           totalSales: 0,
           totalOrders: 0,
           avgOrderValue: 0,
-          avgSalesPerMachine: 0,
+          totalInvoices: 0, // Changed from avgSalesPerMachine to totalInvoices
         });
         setDailySalesData([]);
         setHourlySalesData([]);
@@ -1056,7 +1058,7 @@ export default function App() {
                   totalSales={summaryData.totalSales}
                   totalOrders={summaryData.totalOrders}
                   avgOrderValue={summaryData.avgOrderValue}
-                  avgSalesPerMachine={summaryData.avgSalesPerMachine}
+                  totalInvoices={summaryData.totalInvoices} // Passed totalInvoices
                   selectedTimePeriod={selectedTimePeriod}
                 />
                 <SalesCharts
