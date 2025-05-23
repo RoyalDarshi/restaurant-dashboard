@@ -26,7 +26,10 @@ import {
   MapPin,
   HardDrive,
   ShoppingBag,
-  ReceiptText, // Import a new icon for invoices if desired, e.g., ReceiptText from lucide-react
+  ReceiptText,
+  Store,
+  Truck, // Icon for delivery channel
+  Tag, // Icon for POD
 } from "lucide-react";
 
 // Backend API URL
@@ -42,6 +45,11 @@ const COLORS = [
   "#06B6D4", // Cyan-500
   "#EC4899", // Pink-500
   "#A8A29E", // Stone-500
+  "#34D399", // Green-400
+  "#FB923C", // Orange-400
+  "#F87171", // Red-400
+  "#C084FC", // Purple-400
+  "#22D3EE", // Aqua-400
 ];
 
 // Helper function for Indian Rupee formatting (Lakhs and Crores)
@@ -80,6 +88,8 @@ interface Transaction {
   productName: string;
   machineId: string;
   transactionType: string;
+  deliveryChannel: string; // Added new field
+  pod: string; // Added new field
   timestamp: number;
   amount: number;
   quantity: number;
@@ -132,7 +142,7 @@ interface SummaryCardsProps {
   totalSales: number;
   totalOrders: number;
   avgOrderValue: number;
-  totalInvoices: number; // Changed from avgSalesPerMachine to totalInvoices
+  totalInvoices: number;
   selectedTimePeriod: string;
 }
 
@@ -140,13 +150,13 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
   totalSales,
   totalOrders,
   avgOrderValue,
-  totalInvoices, // Changed from avgSalesPerMachine to totalInvoices
+  totalInvoices,
   selectedTimePeriod,
 }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <Card
       title="Total Sales"
-      value={formatIndianCurrency(totalSales)} // Updated to formatIndianCurrency
+      value={formatIndianCurrency(totalSales)}
       icon={<TrendingUp className="text-indigo-500" />}
       description={`Sales ${selectedTimePeriod}`}
       color="text-indigo-500"
@@ -160,16 +170,16 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
     />
     <Card
       title="Average Order Value"
-      value={formatIndianCurrency(avgOrderValue)} // Updated to formatIndianCurrency
+      value={formatIndianCurrency(avgOrderValue)}
       icon={<Utensils className="text-amber-500" />}
       description={`Avg. per order ${selectedTimePeriod}`}
       color="text-amber-500"
     />
     <Card
-      title="Total GC" // Changed title
-      value={totalInvoices.toLocaleString()} // Changed value to totalInvoices
-      icon={<ReceiptText className="text-violet-500" />} // Changed icon
-      description={`Invoices ${selectedTimePeriod}`} // Changed description
+      title="Total GC"
+      value={totalInvoices.toLocaleString()}
+      icon={<ReceiptText className="text-violet-500" />}
+      description={`Invoices ${selectedTimePeriod}`}
       color="text-violet-500"
     />
   </div>
@@ -323,7 +333,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
               layout="vertical"
-              data={salesByProductDescription.slice(0, 10)} // Show only top 5
+              data={salesByProductDescription.slice(0, 10)}
               margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
@@ -355,9 +365,6 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
                 cy="50%"
                 outerRadius={100}
                 fill="#8884d8"
-                // label={({ name, percent }) =>
-                //   `${name} ${(percent * 100).toFixed(0)}%`
-                // }
               >
                 {salesByProductDescription.map((entry, index) => (
                   <Cell
@@ -369,7 +376,6 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
               <Tooltip
                 formatter={(value: number) => formatIndianCurrency(value)}
               />
-              {/* <Legend /> */}
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -417,9 +423,6 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
                 cy="50%"
                 outerRadius={100}
                 fill="#8884d8"
-                // label={({ name, percent }) =>
-                //   `${name} ${(percent * 100).toFixed(0)}%`
-                // }
               >
                 {salesByItemFamilyGroup.map((entry, index) => (
                   <Cell
@@ -479,11 +482,200 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
                 cy="50%"
                 outerRadius={100}
                 fill="#8884d8"
-                // label={({ name, percent }) =>
-                //   `${name} ${(percent * 100).toFixed(0)}%`
-                // }
               >
                 {salesByItemDayPart.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </>
+    )}
+  </div>
+);
+
+// Store Charts Component
+interface StoreChartsProps {
+  salesBySaleType: { name: string; value: number }[];
+  salesByDeliveryChannel: { name: string; value: number }[];
+  salesByPod: { name: string; value: number }[];
+}
+
+const StoreCharts: React.FC<StoreChartsProps> = ({
+  salesBySaleType,
+  salesByDeliveryChannel,
+  salesByPod,
+}) => (
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    {salesBySaleType.length > 0 && (
+      <>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Sale Type (Bar Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              layout="vertical"
+              data={salesBySaleType}
+              margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <YAxis type="category" dataKey="name" stroke="#666" width={80} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+              <Bar dataKey="value" fill={COLORS[0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Sale Type (Pie Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={salesBySaleType}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+              >
+                {salesBySaleType.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </>
+    )}
+
+    {salesByDeliveryChannel.length > 0 && (
+      <>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Delivery Channel (Bar Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              layout="vertical"
+              data={salesByDeliveryChannel}
+              margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <YAxis type="category" dataKey="name" stroke="#666" width={80} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+              <Bar dataKey="value" fill={COLORS[1]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Delivery Channel (Pie Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={salesByDeliveryChannel}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+              >
+                {salesByDeliveryChannel.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </>
+    )}
+
+    {salesByPod.length > 0 && (
+      <>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by POD (Bar Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              layout="vertical"
+              data={salesByPod}
+              margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <YAxis type="category" dataKey="name" stroke="#666" width={80} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
+              <Legend />
+              <Bar dataKey="value" fill={COLORS[2]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by POD (Pie Chart)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={salesByPod}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+              >
+                {salesByPod.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
@@ -552,6 +744,12 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Delivery Channel
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                POD
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Amount
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -579,6 +777,12 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {transaction.transactionType}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.deliveryChannel}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.pod}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatIndianCurrency(transaction.amount)}
@@ -636,12 +840,16 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState("all");
   const [selectedMachine, setSelectedMachine] = useState("all");
   const [selectedTransactionType, setSelectedTransactionType] = useState("all");
-  const [currentView, setCurrentView] = useState("sales"); // 'sales' or 'product'
+  const [selectedDeliveryChannel, setSelectedDeliveryChannel] = useState("all"); // New state for delivery channel
+  const [selectedPod, setSelectedPod] = useState("all"); // New state for POD
+  const [currentView, setCurrentView] = useState("sales"); // 'sales', 'product', or 'store'
 
   const [restaurants, setRestaurants] = useState<FilterOption[]>([]);
   const [products, setProducts] = useState<FilterOption[]>([]);
   const [machines, setMachines] = useState<string[]>([]);
   const [transactionTypes, setTransactionTypes] = useState<string[]>([]);
+  const [deliveryChannels, setDeliveryChannels] = useState<string[]>([]); // New state for delivery channels
+  const [pods, setPods] = useState<string[]>([]); // New state for PODs
 
   const [filteredTransactions, setFilteredTransactions] = useState<
     Transaction[]
@@ -654,7 +862,7 @@ export default function App() {
     totalSales: 0,
     totalOrders: 0,
     avgOrderValue: 0,
-    totalInvoices: 0, // Changed from avgSalesPerMachine to totalInvoices
+    totalInvoices: 0,
   });
   const [dailySalesData, setDailySalesData] = useState<
     { name: string; sales: number }[]
@@ -676,6 +884,16 @@ export default function App() {
   const [salesByItemDayPartData, setSalesByItemDayPartData] = useState<
     { name: string; value: number }[]
   >([]);
+  // New states for Store View charts
+  const [salesBySaleTypeData, setSalesBySaleTypeData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesByDeliveryChannelData, setSalesByDeliveryChannelData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesByPodData, setSalesByPodData] = useState<
+    { name: string; value: number }[]
+  >([]);
 
   // Fetch initial filter options
   useEffect(() => {
@@ -690,6 +908,8 @@ export default function App() {
         setProducts(data.products);
         setMachines(data.machines);
         setTransactionTypes(data.transactionTypes);
+        setDeliveryChannels(data.deliveryChannels); // Set new filter option
+        setPods(data.pods); // Set new filter option
       } catch (err: any) {
         console.error("Failed to fetch filter options:", err);
         setError("Failed to load filter options. " + err.message);
@@ -717,6 +937,8 @@ export default function App() {
           productId: selectedProduct, // Send item_code for filtering
           machineId: selectedMachine,
           transactionType: selectedTransactionType,
+          deliveryChannel: selectedDeliveryChannel, // Include in params
+          pod: selectedPod, // Include in params
         }).toString();
 
         // --- Fetch Summary Data ---
@@ -756,6 +978,8 @@ export default function App() {
               productId: selectedProduct,
               machineId: selectedMachine,
               transactionType: selectedTransactionType,
+              deliveryChannel: selectedDeliveryChannel,
+              pod: selectedPod,
             }).toString();
             const byRestaurantResponse = await fetch(
               `${API_BASE_URL}/sales/by-restaurant?${paramsForRestaurantChart}`
@@ -777,16 +1001,15 @@ export default function App() {
               `Sales by product fetch failed: ${byProductResponse.status}`
             );
           setSalesByProductData(await byProductResponse.json());
-        } else {
-          // Clear sales view data when not in sales view
-          setDailySalesData([]);
-          setHourlySalesData([]);
-          setSalesByRestaurantData([]);
-          setSalesByProductData([]);
-        }
 
-        // --- Fetch Product View Charts Data ---
-        if (currentView === "product") {
+          // Clear other view data
+          setSalesByProductDescriptionData([]);
+          setSalesByItemFamilyGroupData([]);
+          setSalesByItemDayPartData([]);
+          setSalesBySaleTypeData([]);
+          setSalesByDeliveryChannelData([]);
+          setSalesByPodData([]);
+        } else if (currentView === "product") {
           const byProductDescResponse = await fetch(
             `${API_BASE_URL}/product/by-description?${params}`
           );
@@ -813,8 +1036,49 @@ export default function App() {
               `Sales by item day part fetch failed: ${byDayPartResponse.status}`
             );
           setSalesByItemDayPartData(await byDayPartResponse.json());
-        } else {
-          // Clear product view data when not in product view
+
+          // Clear other view data
+          setDailySalesData([]);
+          setHourlySalesData([]);
+          setSalesByRestaurantData([]);
+          setSalesByProductData([]);
+          setSalesBySaleTypeData([]);
+          setSalesByDeliveryChannelData([]);
+          setSalesByPodData([]);
+        } else if (currentView === "store") {
+          // Store View specific fetches
+          const bySaleTypeResponse = await fetch(
+            `${API_BASE_URL}/sales/by-sale-type?${params}`
+          );
+          if (!bySaleTypeResponse.ok)
+            throw new Error(
+              `Sales by sale type fetch failed: ${bySaleTypeResponse.status}`
+            );
+          setSalesBySaleTypeData(await bySaleTypeResponse.json());
+
+          const byDeliveryChannelResponse = await fetch(
+            `${API_BASE_URL}/sales/by-delivery-channel?${params}`
+          );
+          if (!byDeliveryChannelResponse.ok)
+            throw new Error(
+              `Sales by delivery channel fetch failed: ${byDeliveryChannelResponse.status}`
+            );
+          setSalesByDeliveryChannelData(await byDeliveryChannelResponse.json());
+
+          const byPodResponse = await fetch(
+            `${API_BASE_URL}/sales/by-pod?${params}`
+          );
+          if (!byPodResponse.ok)
+            throw new Error(
+              `Sales by POD fetch failed: ${byPodResponse.status}`
+            );
+          setSalesByPodData(await byPodResponse.json());
+
+          // Clear other view data
+          setDailySalesData([]);
+          setHourlySalesData([]);
+          setSalesByRestaurantData([]);
+          setSalesByProductData([]);
           setSalesByProductDescriptionData([]);
           setSalesByItemFamilyGroupData([]);
           setSalesByItemDayPartData([]);
@@ -840,7 +1104,7 @@ export default function App() {
           totalSales: 0,
           totalOrders: 0,
           avgOrderValue: 0,
-          totalInvoices: 0, // Changed from avgSalesPerMachine to totalInvoices
+          totalInvoices: 0,
         });
         setDailySalesData([]);
         setHourlySalesData([]);
@@ -849,6 +1113,9 @@ export default function App() {
         setSalesByProductDescriptionData([]);
         setSalesByItemFamilyGroupData([]);
         setSalesByItemDayPartData([]);
+        setSalesBySaleTypeData([]);
+        setSalesByDeliveryChannelData([]);
+        setSalesByPodData([]);
         setFilteredTransactions([]);
       } finally {
         setLoading(false);
@@ -861,6 +1128,8 @@ export default function App() {
     selectedProduct,
     selectedMachine,
     selectedTransactionType,
+    selectedDeliveryChannel, // New dependency
+    selectedPod, // New dependency
     currentView, // Crucial dependency for changing views
   ]);
 
@@ -892,13 +1161,23 @@ export default function App() {
           >
             Product View
           </button>
+          <button
+            onClick={() => setCurrentView("store")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              currentView === "store"
+                ? "bg-indigo-600 text-white shadow"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            Store View
+          </button>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 p-6">
         {/* Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="bg-white p-6 rounded-lg shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-7 gap-4">
           <div>
             <label
               htmlFor="timePeriod"
@@ -955,7 +1234,7 @@ export default function App() {
             </div>
           </div>
 
-          {currentView === "sales" && ( // Conditionally render product filter
+          {currentView === "sales" && (
             <div>
               <label
                 htmlFor="product"
@@ -1037,6 +1316,60 @@ export default function App() {
               </div>
             </div>
           </div>
+
+          <div>
+            <label
+              htmlFor="deliveryChannel"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Delivery Channel
+            </label>
+            <div className="relative">
+              <select
+                id="deliveryChannel"
+                value={selectedDeliveryChannel}
+                onChange={(e) => setSelectedDeliveryChannel(e.target.value)}
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+              >
+                <option value="all">All Channels</option>
+                {deliveryChannels.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <Truck className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="pod"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              POD
+            </label>
+            <div className="relative">
+              <select
+                id="pod"
+                value={selectedPod}
+                onChange={(e) => setSelectedPod(e.target.value)}
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+              >
+                <option value="all">All PODs</option>
+                {pods.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <Tag className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {loading && (
@@ -1058,7 +1391,7 @@ export default function App() {
                   totalSales={summaryData.totalSales}
                   totalOrders={summaryData.totalOrders}
                   avgOrderValue={summaryData.avgOrderValue}
-                  totalInvoices={summaryData.totalInvoices} // Passed totalInvoices
+                  totalInvoices={summaryData.totalInvoices}
                   selectedTimePeriod={selectedTimePeriod}
                 />
                 <SalesCharts
@@ -1079,6 +1412,14 @@ export default function App() {
                 salesByProductDescription={salesByProductDescriptionData}
                 salesByItemFamilyGroup={salesByItemFamilyGroupData}
                 salesByItemDayPart={salesByItemDayPartData}
+              />
+            )}
+
+            {currentView === "store" && (
+              <StoreCharts
+                salesBySaleType={salesBySaleTypeData}
+                salesByDeliveryChannel={salesByDeliveryChannelData}
+                salesByPod={salesByPodData}
               />
             )}
           </>
