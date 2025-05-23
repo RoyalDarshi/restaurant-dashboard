@@ -204,7 +204,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h3 className="text-lg font-semibold mb-4 text-gray-700">
-        Daily Sales Trend
+        Daily Sales Performance
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
@@ -229,7 +229,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
 
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h3 className="text-lg font-semibold mb-4 text-gray-700">
-        Hourly Sales Trend
+        Hourly Sales Distribution
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart
@@ -249,7 +249,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
     {selectedRestaurant === "all" && salesByRestaurant.length > 0 && (
       <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
         <h3 className="text-lg font-semibold mb-4 text-gray-700">
-          Sales by Restaurant
+          Sales Breakdown by Restaurant
         </h3>
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
@@ -284,7 +284,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
     {salesByProduct.length > 0 && (
       <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
         <h3 className="text-lg font-semibold mb-4 text-gray-700">
-          Top 5 Products by Sales
+          Top Selling Products
         </h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart
@@ -328,7 +328,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
       <>
         <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Product Description (Bar Chart)
+            Product-wise Sales Overview (Bar Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
@@ -353,7 +353,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Product Description (Pie Chart)
+            Product-wise Sales Overview (Pie Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -386,7 +386,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
       <>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Item Family Group (Bar Chart)
+            Sales by Product Category (Bar Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
@@ -411,7 +411,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Item Family Group (Pie Chart)
+            Sales by Product Category (Pie Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -445,7 +445,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
       <>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Item Day Part (Bar Chart)
+            Sales by Day Part (Bar Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
@@ -470,7 +470,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Item Day Part (Pie Chart)
+            Sales by Day Part (Pie Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -519,7 +519,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
       <>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Sale Type (Bar Chart)
+            Sales by Transaction Type (Bar Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
@@ -544,7 +544,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Sale Type (Pie Chart)
+            Sales by Transaction Type (Pie Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -578,7 +578,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
       <>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Delivery Channel (Bar Chart)
+            Sales by Delivery Method (Bar Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
@@ -603,7 +603,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Delivery Channel (Pie Chart)
+            Sales by Delivery Method (Pie Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -637,7 +637,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
       <>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by POD (Bar Chart)
+            Sales by Payment Method (Bar Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
@@ -662,7 +662,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by POD (Pie Chart)
+            Sales by Payment Method (Pie Chart)
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
