@@ -867,7 +867,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
 
 // Main App Component
 export default function App() {
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState("last30days");
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState("last3Months");
   const [selectedRestaurant, setSelectedRestaurant] = useState("all");
   const [selectedProduct, setSelectedProduct] = useState("all");
   const [selectedMachine, setSelectedMachine] = useState("all");
