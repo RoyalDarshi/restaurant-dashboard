@@ -1,5 +1,5 @@
 // RestaurantDashboard.tsx
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -118,7 +118,7 @@ const Card: React.FC<CardProps> = ({
   description,
   color = "text-indigo-500",
 }) => (
-  <div className="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
+  <div className="bg-white p-2 rounded-lg shadow-md flex items-center space-x-1">
     <div
       className={`p-3 rounded-full bg-opacity-20 ${color.replace(
         "text-",
@@ -153,7 +153,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
   totalInvoices,
   selectedTimePeriod,
 }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mb-1">
     <Card
       title="Total Sales"
       value={formatIndianCurrency(totalSales)}
@@ -201,8 +201,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
   salesByProduct,
   selectedRestaurant,
 }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <div className="bg-white p-6 rounded-lg shadow-md">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
+    <div className="bg-white p-2 rounded-lg shadow-md">
       <h3 className="text-lg font-semibold mb-4 text-gray-700">
         Daily Sales Performance
       </h3>
@@ -227,7 +227,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
       </ResponsiveContainer>
     </div>
 
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white p-2 rounded-lg shadow-md">
       <h3 className="text-lg font-semibold mb-4 text-gray-700">
         Hourly Sales Distribution
       </h3>
@@ -247,7 +247,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
     </div>
 
     {selectedRestaurant === "all" && salesByRestaurant.length > 0 && (
-      <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
+      <div className="bg-white p-2 rounded-lg shadow-md lg:col-span-1">
         <h3 className="text-lg font-semibold mb-4 text-gray-700">
           Sales Breakdown by Restaurant
         </h3>
@@ -282,7 +282,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
     )}
 
     {salesByProduct.length > 0 && (
-      <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
+      <div className="bg-white p-2 rounded-lg shadow-md lg:col-span-1">
         <h3 className="text-lg font-semibold mb-4 text-gray-700">
           Top Selling Products
         </h3>
@@ -323,10 +323,10 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
   salesByItemFamilyGroup,
   salesByItemDayPart,
 }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
     {salesByProductDescription.length > 0 && (
       <>
-        <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
+        <div className="bg-white p-2 rounded-lg shadow-md lg:col-span-1">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Product-wise Sales Overview (Bar Chart)
           </h3>
@@ -351,7 +351,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-1">
+        <div className="bg-white p-2 rounded-lg shadow-md lg:col-span-1">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Product-wise Sales Overview (Pie Chart)
           </h3>
@@ -384,7 +384,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
 
     {salesByItemFamilyGroup.length > 0 && (
       <>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-2 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Product Category (Bar Chart)
           </h3>
@@ -409,7 +409,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-2 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Product Category (Pie Chart)
           </h3>
@@ -443,7 +443,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
 
     {salesByItemDayPart.length > 0 && (
       <>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-2 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Day Part (Bar Chart)
           </h3>
@@ -468,7 +468,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-2 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Day Part (Pie Chart)
           </h3>
@@ -514,10 +514,10 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
   salesByDeliveryChannel,
   salesByPod,
 }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
     {salesBySaleType.length > 0 && (
       <>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-2 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Transaction Type (Bar Chart)
           </h3>
@@ -542,7 +542,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-2 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Transaction Type (Pie Chart)
           </h3>
@@ -576,7 +576,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
 
     {salesByDeliveryChannel.length > 0 && (
       <>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-2 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Delivery Method (Bar Chart)
           </h3>
@@ -601,7 +601,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-2 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Delivery Method (Pie Chart)
           </h3>
@@ -635,7 +635,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
 
     {salesByPod.length > 0 && (
       <>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-2 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Payment Method (Bar Chart)
           </h3>
@@ -660,7 +660,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="bg-white p-2 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Payment Method (Pie Chart)
           </h3>
@@ -795,37 +795,69 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
           </tbody>
         </table>
       </div>
-      <div className="mt-4 flex justify-end">
-        <nav
-          className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-          aria-label="Pagination"
-        >
+      <div className="mt-4 flex justify-between items-center flex-wrap">
+        <p className="text-sm text-gray-600 mb-2 sm:mb-0">
+          Page {currentPage} of {totalPages}
+        </p>
+        <nav className="flex space-x-1" aria-label="Pagination">
+          <button
+            onClick={() => paginate(1)}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+          >
+            First
+          </button>
           <button
             onClick={() => paginate(currentPage - 1)}
             disabled={currentPage === 1}
-            className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-50"
           >
-            Previous
+            Prev
           </button>
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => paginate(i + 1)}
-              className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${
-                currentPage === i + 1
-                  ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter((page) =>
+              totalPages <= 5
+                ? true
+                : Math.abs(currentPage - page) <= 1 ||
+                  page === 1 ||
+                  page === totalPages
+            )
+            .map((page, index, arr) => {
+              const prevPage = arr[index - 1];
+              const showEllipsis = prevPage && page - prevPage > 1;
+              return (
+                <React.Fragment key={page}>
+                  {showEllipsis && (
+                    <span className="px-2 py-1 text-sm text-gray-400">...</span>
+                  )}
+                  <button
+                    onClick={() => paginate(page)}
+                    className={`px-3 py-1 rounded-md text-sm border ${
+                      currentPage === page
+                        ? "bg-indigo-500 text-white border-indigo-500"
+                        : "bg-white text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                </React.Fragment>
+              );
+            })}
+
           <button
             onClick={() => paginate(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-50"
           >
             Next
+          </button>
+          <button
+            onClick={() => paginate(totalPages)}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+          >
+            Last
           </button>
         </nav>
       </div>
@@ -1136,14 +1168,14 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
-      <header className="bg-white shadow-sm p-4 flex justify-between items-center">
+      <header className="bg-white shadow-sm p-2 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">
           Restaurant Sales Dashboard
         </h1>
-        <div className="flex space-x-4">
+        <div className="flex space-x-1">
           <button
             onClick={() => setCurrentView("sales")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-0 rounded-md text-sm font-medium transition-colors ${
               currentView === "sales"
                 ? "bg-indigo-600 text-white shadow"
                 : "text-gray-700 hover:bg-gray-100"
@@ -1175,9 +1207,9 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-2">
         {/* Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-7 gap-4">
+        <div className="bg-white p-2 rounded-lg shadow-md mb-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-7 gap-4">
           <div>
             <label
               htmlFor="timePeriod"
