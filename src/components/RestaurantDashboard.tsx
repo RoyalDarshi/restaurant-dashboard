@@ -663,7 +663,7 @@ const OcOmCharts: React.FC<OcOmChartsProps> = ({
 }) => {
   // Always render the four store-wise charts
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
       {salesByOcOmStoreSummary.length > 0 ? (
         <>
           {/* Total Sales by Store */}
