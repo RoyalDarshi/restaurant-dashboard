@@ -1,5 +1,5 @@
 // RestaurantDashboard.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   LineChart,
   Line,
@@ -28,59 +28,45 @@ import {
   ShoppingBag,
   ReceiptText,
   Store,
-  Truck, // Icon for delivery channel
-  Tag, // Icon for POD
+  Truck,
+  Tag,
 } from "lucide-react";
 
-// Backend API URL
-const API_BASE_URL = "http://localhost:3001/api"; // Ensure this matches your backend port
+const API_BASE_URL = "http://localhost:3001/api";
 
-// Updated COLORS for a more modern and vibrant look
 const COLORS = [
-  "#6366F1", // Indigo-500
-  "#10B981", // Emerald-500
-  "#F59E0B", // Amber-500
-  "#EF4444", // Red-500
-  "#8B5CF6", // Violet-500
-  "#06B6D4", // Cyan-500
-  "#EC4899", // Pink-500
-  "#A8A29E", // Stone-500
-  "#34D399", // Green-400
-  "#FB923C", // Orange-400
-  "#F87171", // Red-400
-  "#C084FC", // Purple-400
-  "#22D3EE", // Aqua-400
+  "#6366F1",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#06B6D4",
+  "#EC4899",
+  "#A8A29E",
+  "#34D399",
+  "#FB923C",
+  "#F87171",
+  "#C084FC",
+  "#22D3EE",
 ];
 
-// Helper function for Indian Rupee formatting (Lakhs and Crores)
 const formatIndianCurrency = (value: number) => {
-  if (value === null || value === undefined) {
-    return "N/A"; // Handle null or undefined values gracefully
-  }
-  if (value >= 10000000) {
+  if (value === null || value === undefined) return "N/A";
+  if (value >= 10000000)
     return `₹${(value / 10000000).toLocaleString(undefined, {
       maximumFractionDigits: 2,
     })} Cr`;
-  } else if (value >= 100000) {
+  else if (value >= 100000)
     return `₹${(value / 100000).toLocaleString(undefined, {
       maximumFractionDigits: 2,
     })} L`;
-  } else {
+  else
     return `₹${value.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
-  }
-};
-// Helper to get date string inYYYY-MM-DD format
-const getFormattedDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
 };
 
-// Type definitions for data
 interface Transaction {
   id: number;
   restaurantId: string;
@@ -88,8 +74,8 @@ interface Transaction {
   productName: string;
   machineId: string;
   transactionType: string;
-  deliveryChannel: string; // Added new field
-  pod: string; // Added new field
+  deliveryChannel: string;
+  pod: string;
   timestamp: number;
   amount: number;
   quantity: number;
@@ -100,9 +86,12 @@ interface Transaction {
 interface FilterOption {
   id: string;
   name: string;
+  subcategory_1?: string;
+  reporting_2?: string;
+  piecategory_3?: string;
+  reporting_id_4?: string;
 }
 
-// Reusable Card Component
 interface CardProps {
   title: string;
   value: string | number;
@@ -137,7 +126,6 @@ const Card: React.FC<CardProps> = ({
   </div>
 );
 
-// Summary Cards Component
 interface SummaryCardsProps {
   totalSales: number;
   totalOrders: number;
@@ -185,7 +173,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
   </div>
 );
 
-// Sales Charts Component
 interface SalesChartsProps {
   dailySales: { name: string; sales: number }[];
   hourlySales: { name: string; sales: number }[];
@@ -226,7 +213,6 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
         </LineChart>
       </ResponsiveContainer>
     </div>
-
     <div className="bg-white p-2 rounded-lg shadow-md">
       <h3 className="text-lg font-semibold mb-4 text-gray-700">
         Hourly Sales Distribution
@@ -245,7 +231,6 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
         </BarChart>
       </ResponsiveContainer>
     </div>
-
     {selectedRestaurant === "all" && salesByRestaurant.length > 0 && (
       <div className="bg-white p-2 rounded-lg shadow-md lg:col-span-1">
         <h3 className="text-lg font-semibold mb-4 text-gray-700">
@@ -280,7 +265,6 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
         </ResponsiveContainer>
       </div>
     )}
-
     {salesByProduct.length > 0 && (
       <div className="bg-white p-2 rounded-lg shadow-md lg:col-span-1">
         <h3 className="text-lg font-semibold mb-4 text-gray-700">
@@ -311,7 +295,6 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
   </div>
 );
 
-// Product Charts Component
 interface ProductChartsProps {
   salesByProductDescription: { name: string; value: number }[];
   salesByItemFamilyGroup: { name: string; value: number }[];
@@ -381,7 +364,6 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
         </div>
       </>
     )}
-
     {salesByItemFamilyGroup.length > 0 && (
       <>
         <div className="bg-white p-2 rounded-lg shadow-md">
@@ -440,7 +422,6 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
         </div>
       </>
     )}
-
     {salesByItemDayPart.length > 0 && (
       <>
         <div className="bg-white p-2 rounded-lg shadow-md">
@@ -502,7 +483,6 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
   </div>
 );
 
-// Store Charts Component
 interface StoreChartsProps {
   salesBySaleType: { name: string; value: number }[];
   salesByDeliveryChannel: { name: string; value: number }[];
@@ -573,7 +553,6 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
         </div>
       </>
     )}
-
     {salesByDeliveryChannel.length > 0 && (
       <>
         <div className="bg-white p-2 rounded-lg shadow-md">
@@ -632,7 +611,6 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
         </div>
       </>
     )}
-
     {salesByPod.length > 0 && (
       <>
         <div className="bg-white p-2 rounded-lg shadow-md">
@@ -694,7 +672,6 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
   </div>
 );
 
-// Transactions Table Component
 interface TransactionsTableProps {
   filteredTransactions: Transaction[];
 }
@@ -795,8 +772,8 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
           </tbody>
         </table>
       </div>
-      <div className="mt-4 flex justify-between items-center flex-wrap">
-        <p className="text-sm text-gray-600 mb-2 sm:mb-0">
+      <div className="px-6 py-4 flex items-center justify-between">
+        <p className="text-sm text-gray-700 sm:mb-0">
           Page {currentPage} of {totalPages}
         </p>
         <nav className="flex space-x-1" aria-label="Pagination">
@@ -814,7 +791,6 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
           >
             Prev
           </button>
-
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .filter((page) =>
               totalPages <= 5
@@ -844,7 +820,6 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 </React.Fragment>
               );
             })}
-
           <button
             onClick={() => paginate(currentPage + 1)}
             disabled={currentPage === totalPages}
@@ -865,31 +840,291 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   );
 };
 
-// Main App Component
+interface ProductFilterProps {
+  products: FilterOption[]; // Now expects flat list of products
+  selectedProductHierarchy: {
+    subcategory_1: string;
+    reporting_2: string;
+    piecategory_3: string;
+    reporting_id_4: string;
+    productName: string;
+  };
+  onSelectProductHierarchy: (
+    hierarchy: React.SetStateAction<{
+      subcategory_1: string;
+      reporting_2: string;
+      piecategory_3: string;
+      reporting_id_4: string;
+      productName: string;
+    }>
+  ) => void;
+}
+
+const ProductFilter: React.FC<ProductFilterProps> = ({
+  products,
+  selectedProductHierarchy,
+  onSelectProductHierarchy,
+}) => {
+  const {
+    subcategory_1,
+    reporting_2,
+    piecategory_3,
+    reporting_id_4,
+    productName,
+  } = selectedProductHierarchy;
+
+  const handleSelectChange = useCallback(
+    (level: string, value: string) => {
+      let newHierarchy = { ...selectedProductHierarchy };
+
+      if (level === "subcategory_1") {
+        newHierarchy = {
+          subcategory_1: value,
+          reporting_2: "all",
+          piecategory_3: "all",
+          reporting_id_4: "all",
+          productName: "all",
+        };
+      } else if (level === "reporting_2") {
+        newHierarchy = {
+          ...newHierarchy,
+          reporting_2: value,
+          piecategory_3: "all",
+          reporting_id_4: "all",
+          productName: "all",
+        };
+      } else if (level === "piecategory_3") {
+        newHierarchy = {
+          ...newHierarchy,
+          piecategory_3: value,
+          reporting_id_4: "all",
+          productName: "all",
+        };
+      } else if (level === "reporting_id_4") {
+        newHierarchy = {
+          ...newHierarchy,
+          reporting_id_4: value,
+          productName: "all",
+        };
+      } else if (level === "productName") {
+        newHierarchy = {
+          ...newHierarchy,
+          productName: value,
+        };
+      }
+      onSelectProductHierarchy(newHierarchy);
+    },
+    [onSelectProductHierarchy, selectedProductHierarchy]
+  );
+
+  const subcategoryOptions = useMemo(() => {
+    const unique = [...new Set(products.map((p) => p.subcategory_1))];
+    return ["all", ...unique.filter((subcat) => subcat != null)];
+  }, [products]);
+
+  const reporting2Options = useMemo(() => {
+    const filteredProducts =
+      subcategory_1 === "all"
+        ? products
+        : products.filter((p) => p.subcategory_1 === subcategory_1);
+    const unique = [...new Set(filteredProducts.map((p) => p.reporting_2))];
+    return ["all", ...unique.filter((opt) => opt != null)];
+  }, [products, subcategory_1]);
+
+  const piecategory3Options = useMemo(() => {
+    let filteredProducts = products;
+    if (subcategory_1 !== "all")
+      filteredProducts = filteredProducts.filter(
+        (p) => p.subcategory_1 === subcategory_1
+      );
+    if (reporting_2 !== "all")
+      filteredProducts = filteredProducts.filter(
+        (p) => p.reporting_2 === reporting_2
+      );
+    const unique = [...new Set(filteredProducts.map((p) => p.piecategory_3))];
+    return ["all", ...unique.filter((opt) => opt != null)];
+  }, [products, subcategory_1, reporting_2]);
+
+  const reportingId4Options = useMemo(() => {
+    let filteredProducts = products;
+    if (subcategory_1 !== "all")
+      filteredProducts = filteredProducts.filter(
+        (p) => p.subcategory_1 === subcategory_1
+      );
+    if (reporting_2 !== "all")
+      filteredProducts = filteredProducts.filter(
+        (p) => p.reporting_2 === reporting_2
+      );
+    if (piecategory_3 !== "all")
+      filteredProducts = filteredProducts.filter(
+        (p) => p.piecategory_3 === piecategory_3
+      );
+    const unique = [...new Set(filteredProducts.map((p) => p.reporting_id_4))];
+    return ["all", ...unique.filter((opt) => opt != null)];
+  }, [products, subcategory_1, reporting_2, piecategory_3]);
+
+  const productNameOptions = useMemo(() => {
+    let filteredProducts = products;
+    if (subcategory_1 !== "all")
+      filteredProducts = filteredProducts.filter(
+        (p) => p.subcategory_1 === subcategory_1
+      );
+    if (reporting_2 !== "all")
+      filteredProducts = filteredProducts.filter(
+        (p) => p.reporting_2 === reporting_2
+      );
+    if (piecategory_3 !== "all")
+      filteredProducts = filteredProducts.filter(
+        (p) => p.piecategory_3 === piecategory_3
+      );
+    if (reporting_id_4 !== "all")
+      filteredProducts = filteredProducts.filter(
+        (p) => p.reporting_id_4 === reporting_id_4
+      );
+    // Ensure that the 'id' for productName is 'productid' from the backend
+    return [
+      { id: "all", name: "All Products" },
+      ...filteredProducts.map((p) => ({ id: p.id, name: p.name })),
+    ];
+  }, [products, subcategory_1, reporting_2, piecategory_3, reporting_id_4]);
+
+  return (
+    <div className="bg-white p-2 rounded-lg shadow-md mb-1">
+      <h3 className="text-lg font-semibold mb-2">Product Filter</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div>
+          <label
+            htmlFor="subcategory_1"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Subcategory 1
+          </label>
+          <select
+            id="subcategory_1"
+            value={subcategory_1}
+            onChange={(e) =>
+              handleSelectChange("subcategory_1", e.target.value)
+            }
+            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+          >
+            {subcategoryOptions.map((option) => (
+              <option key={option} value={option}>
+                {option === "all" ? "All Subcategories" : option}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="reporting_2"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Reporting 2
+          </label>
+          <select
+            id="reporting_2"
+            value={reporting_2}
+            onChange={(e) => handleSelectChange("reporting_2", e.target.value)}
+            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+            disabled={subcategory_1 === "all"}
+          >
+            {reporting2Options.map((option) => (
+              <option key={option} value={option}>
+                {option === "all" ? "All Reporting 2" : option}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="piecategory_3"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Piecategory 3
+          </label>
+          <select
+            id="piecategory_3"
+            value={piecategory_3}
+            onChange={(e) =>
+              handleSelectChange("piecategory_3", e.target.value)
+            }
+            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+            disabled={reporting_2 === "all"}
+          >
+            {piecategory3Options.map((option) => (
+              <option key={option} value={option}>
+                {option === "all" ? "All Piecategory 3" : option}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="reporting_id_4"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Reporting ID 4
+          </label>
+          <select
+            id="reporting_id_4"
+            value={reporting_id_4}
+            onChange={(e) =>
+              handleSelectChange("reporting_id_4", e.target.value)
+            }
+            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+            disabled={piecategory_3 === "all"}
+          >
+            {reportingId4Options.map((option) => (
+              <option key={option} value={option}>
+                {option === "all" ? "All Reporting ID 4" : option}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="productName"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Product Name
+          </label>
+          <select
+            id="productName"
+            value={productName}
+            onChange={(e) => handleSelectChange("productName", e.target.value)}
+            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+            disabled={reporting_id_4 === "all"}
+          >
+            {productNameOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [selectedTimePeriod, setSelectedTimePeriod] = useState("last3Months");
   const [selectedRestaurant, setSelectedRestaurant] = useState("all");
-  const [selectedProduct, setSelectedProduct] = useState("all");
   const [selectedMachine, setSelectedMachine] = useState("all");
   const [selectedTransactionType, setSelectedTransactionType] = useState("all");
-  const [selectedDeliveryChannel, setSelectedDeliveryChannel] = useState("all"); // New state for delivery channel
-  const [selectedPod, setSelectedPod] = useState("all"); // New state for POD
-  const [currentView, setCurrentView] = useState("sales"); // 'sales', 'product', or 'store'
+  const [selectedDeliveryChannel, setSelectedDeliveryChannel] = useState("all");
+  const [selectedPod, setSelectedPod] = useState("all");
+  const [currentView, setCurrentView] = useState("sales");
 
   const [restaurants, setRestaurants] = useState<FilterOption[]>([]);
-  const [products, setProducts] = useState<FilterOption[]>([]);
-  const [machines, setMachines] = useState<string[]>([]);
+  const [allProductsFlat, setAllProductsFlat] = useState<FilterOption[]>([]); // Renamed from 'products'
+  const [machines, setMachines] = useState<FilterOption[]>([]);
   const [transactionTypes, setTransactionTypes] = useState<string[]>([]);
-  const [deliveryChannels, setDeliveryChannels] = useState<string[]>([]); // New state for delivery channels
-  const [pods, setPods] = useState<string[]>([]); // New state for PODs
-
-  const [filteredTransactions, setFilteredTransactions] = useState<
-    Transaction[]
-  >([]);
-  const [loading, setLoading] = useState(true);
+  const [deliveryChannels, setDeliveryChannels] = useState<string[]>([]);
+  const [pods, setPods] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // New states for aggregated data
   const [summaryData, setSummaryData] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -916,7 +1151,6 @@ export default function App() {
   const [salesByItemDayPartData, setSalesByItemDayPartData] = useState<
     { name: string; value: number }[]
   >([]);
-  // New states for Store View charts
   const [salesBySaleTypeData, setSalesBySaleTypeData] = useState<
     { name: string; value: number }[]
   >([]);
@@ -926,22 +1160,31 @@ export default function App() {
   const [salesByPodData, setSalesByPodData] = useState<
     { name: string; value: number }[]
   >([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<
+    Transaction[]
+  >([]);
 
-  // Fetch initial filter options
+  const [selectedProductHierarchy, setSelectedProductHierarchy] = useState({
+    subcategory_1: "all",
+    reporting_2: "all",
+    piecategory_3: "all",
+    reporting_id_4: "all",
+    productName: "all",
+  });
+
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/mock-data`);
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(`HTTP error! status: ${response.status}`);
-        }
         const data = await response.json();
         setRestaurants(data.restaurants);
-        setProducts(data.products);
+        setAllProductsFlat(data.allProductsFlat); // Use allProductsFlat
         setMachines(data.machines);
         setTransactionTypes(data.transactionTypes);
-        setDeliveryChannels(data.deliveryChannels); // Set new filter option
-        setPods(data.pods); // Set new filter option
+        setDeliveryChannels(data.deliveryChannels);
+        setPods(data.pods);
       } catch (err: any) {
         console.error("Failed to fetch filter options:", err);
         setError("Failed to load filter options. " + err.message);
@@ -950,42 +1193,66 @@ export default function App() {
     fetchFilterOptions();
   }, []);
 
-  // Clear selected product when switching to product view
-  useEffect(() => {
-    if (currentView === "product") {
-      setSelectedProduct("all");
-    }
-  }, [currentView]);
-
-  // Fetch dashboard data based on filters and current view
   useEffect(() => {
     const fetchAllDashboardData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const params = new URLSearchParams({
+        const commonParams: { [key: string]: string } = {
           timePeriod: selectedTimePeriod,
           restaurantId: selectedRestaurant,
-          productId: selectedProduct, // Send item_code for filtering
           machineId: selectedMachine,
           transactionType: selectedTransactionType,
-          deliveryChannel: selectedDeliveryChannel, // Include in params
-          pod: selectedPod, // Include in params
-        }).toString();
+          deliveryChannel: selectedDeliveryChannel,
+          pod: selectedPod,
+        };
 
-        // --- Fetch Summary Data ---
+        // Construct product filter based on the deepest selected hierarchy level
+        let productFilterParam: { type: string; value: string } | null = null;
+        if (selectedProductHierarchy.productName !== "all") {
+          productFilterParam = {
+            type: "productid", // Corresponds to productid in product_master
+            value: selectedProductHierarchy.productName,
+          };
+        } else if (selectedProductHierarchy.reporting_id_4 !== "all") {
+          productFilterParam = {
+            type: "reporting_id_4",
+            value: selectedProductHierarchy.reporting_id_4,
+          };
+        } else if (selectedProductHierarchy.piecategory_3 !== "all") {
+          productFilterParam = {
+            type: "piecategory_3",
+            value: selectedProductHierarchy.piecategory_3,
+          };
+        } else if (selectedProductHierarchy.reporting_2 !== "all") {
+          productFilterParam = {
+            type: "reporting_2",
+            value: selectedProductHierarchy.reporting_2,
+          };
+        } else if (selectedProductHierarchy.subcategory_1 !== "all") {
+          productFilterParam = {
+            type: "subcategory_1",
+            value: selectedProductHierarchy.subcategory_1,
+          };
+        }
+
+        if (productFilterParam) {
+          commonParams.product = JSON.stringify(productFilterParam); // Stringify the object
+        }
+
+        const queryString = new URLSearchParams(commonParams).toString();
+
         const summaryResponse = await fetch(
-          `${API_BASE_URL}/sales/summary?${params}`
+          `${API_BASE_URL}/sales/summary?${queryString}`
         );
         if (!summaryResponse.ok)
           throw new Error(`Summary fetch failed: ${summaryResponse.status}`);
         const summary = await summaryResponse.json();
         setSummaryData(summary);
 
-        // --- Fetch Sales View Charts Data ---
         if (currentView === "sales") {
           const dailyResponse = await fetch(
-            `${API_BASE_URL}/sales/daily-trend?${params}`
+            `${API_BASE_URL}/sales/daily-trend?${queryString}`
           );
           if (!dailyResponse.ok)
             throw new Error(
@@ -994,7 +1261,7 @@ export default function App() {
           setDailySalesData(await dailyResponse.json());
 
           const hourlyResponse = await fetch(
-            `${API_BASE_URL}/sales/hourly-trend?${params}`
+            `${API_BASE_URL}/sales/hourly-trend?${queryString}`
           );
           if (!hourlyResponse.ok)
             throw new Error(
@@ -1002,19 +1269,13 @@ export default function App() {
             );
           setHourlySalesData(await hourlyResponse.json());
 
-          // Sales by Restaurant is only fetched if 'All Restaurants' is selected
           if (selectedRestaurant === "all") {
-            // Ensure restaurantId is not passed for salesByRestaurant endpoint if 'all'
-            const paramsForRestaurantChart = new URLSearchParams({
-              timePeriod: selectedTimePeriod,
-              productId: selectedProduct,
-              machineId: selectedMachine,
-              transactionType: selectedTransactionType,
-              deliveryChannel: selectedDeliveryChannel,
-              pod: selectedPod,
-            }).toString();
+            // For sales by restaurant, remove restaurantId from params if 'all'
+            const { restaurantId, ...paramsForRestaurantChart } = commonParams;
             const byRestaurantResponse = await fetch(
-              `${API_BASE_URL}/sales/by-restaurant?${paramsForRestaurantChart}`
+              `${API_BASE_URL}/sales/by-restaurant?${new URLSearchParams(
+                paramsForRestaurantChart
+              ).toString()}`
             );
             if (!byRestaurantResponse.ok)
               throw new Error(
@@ -1022,11 +1283,11 @@ export default function App() {
               );
             setSalesByRestaurantData(await byRestaurantResponse.json());
           } else {
-            setSalesByRestaurantData([]); // Clear data if a specific restaurant is chosen
+            setSalesByRestaurantData([]);
           }
 
           const byProductResponse = await fetch(
-            `${API_BASE_URL}/sales/by-product?${params}`
+            `${API_BASE_URL}/sales/by-product?${queryString}`
           );
           if (!byProductResponse.ok)
             throw new Error(
@@ -1034,7 +1295,7 @@ export default function App() {
             );
           setSalesByProductData(await byProductResponse.json());
 
-          // Clear other view data
+          // Clear product-specific and store-specific data when in sales view
           setSalesByProductDescriptionData([]);
           setSalesByItemFamilyGroupData([]);
           setSalesByItemDayPartData([]);
@@ -1042,17 +1303,19 @@ export default function App() {
           setSalesByDeliveryChannelData([]);
           setSalesByPodData([]);
         } else if (currentView === "product") {
-          const byProductDescResponse = await fetch(
-            `${API_BASE_URL}/product/by-description?${params}`
+          const byProductDescriptionResponse = await fetch(
+            `${API_BASE_URL}/product/by-description?${queryString}`
           );
-          if (!byProductDescResponse.ok)
+          if (!byProductDescriptionResponse.ok)
             throw new Error(
-              `Sales by product description fetch failed: ${byProductDescResponse.status}`
+              `Sales by product description fetch failed: ${byProductDescriptionResponse.status}`
             );
-          setSalesByProductDescriptionData(await byProductDescResponse.json());
+          setSalesByProductDescriptionData(
+            await byProductDescriptionResponse.json()
+          );
 
           const byFamilyGroupResponse = await fetch(
-            `${API_BASE_URL}/product/by-family-group?${params}`
+            `${API_BASE_URL}/product/by-family-group?${queryString}`
           );
           if (!byFamilyGroupResponse.ok)
             throw new Error(
@@ -1061,7 +1324,7 @@ export default function App() {
           setSalesByItemFamilyGroupData(await byFamilyGroupResponse.json());
 
           const byDayPartResponse = await fetch(
-            `${API_BASE_URL}/product/by-day-part?${params}`
+            `${API_BASE_URL}/product/by-day-part?${queryString}`
           );
           if (!byDayPartResponse.ok)
             throw new Error(
@@ -1069,7 +1332,7 @@ export default function App() {
             );
           setSalesByItemDayPartData(await byDayPartResponse.json());
 
-          // Clear other view data
+          // Clear sales-specific and store-specific data when in product view
           setDailySalesData([]);
           setHourlySalesData([]);
           setSalesByRestaurantData([]);
@@ -1078,9 +1341,8 @@ export default function App() {
           setSalesByDeliveryChannelData([]);
           setSalesByPodData([]);
         } else if (currentView === "store") {
-          // Store View specific fetches
           const bySaleTypeResponse = await fetch(
-            `${API_BASE_URL}/sales/by-sale-type?${params}`
+            `${API_BASE_URL}/sales/by-sale-type?${queryString}`
           );
           if (!bySaleTypeResponse.ok)
             throw new Error(
@@ -1089,7 +1351,7 @@ export default function App() {
           setSalesBySaleTypeData(await bySaleTypeResponse.json());
 
           const byDeliveryChannelResponse = await fetch(
-            `${API_BASE_URL}/sales/by-delivery-channel?${params}`
+            `${API_BASE_URL}/sales/by-delivery-channel?${queryString}`
           );
           if (!byDeliveryChannelResponse.ok)
             throw new Error(
@@ -1098,7 +1360,7 @@ export default function App() {
           setSalesByDeliveryChannelData(await byDeliveryChannelResponse.json());
 
           const byPodResponse = await fetch(
-            `${API_BASE_URL}/sales/by-pod?${params}`
+            `${API_BASE_URL}/sales/by-pod?${queryString}`
           );
           if (!byPodResponse.ok)
             throw new Error(
@@ -1106,7 +1368,7 @@ export default function App() {
             );
           setSalesByPodData(await byPodResponse.json());
 
-          // Clear other view data
+          // Clear sales-specific and product-specific data when in store view
           setDailySalesData([]);
           setHourlySalesData([]);
           setSalesByRestaurantData([]);
@@ -1116,9 +1378,8 @@ export default function App() {
           setSalesByItemDayPartData([]);
         }
 
-        // --- Fetch Filtered Transactions (for the table) ---
         const transactionsResponse = await fetch(
-          `${API_BASE_URL}/sales?${params}`
+          `${API_BASE_URL}/sales?${queryString}`
         );
         if (!transactionsResponse.ok)
           throw new Error(
@@ -1128,10 +1389,9 @@ export default function App() {
       } catch (err: any) {
         console.error("Failed to fetch dashboard data:", err);
         setError(
-          "Failed to load data. Please ensure the backend server is running and configured correctly, and that your database contains data for the selected filters. Error: " +
+          "Failed to load data. Please ensure the backend server is running and configured correctly. Error: " +
             err.message
         );
-        // Clear all data on error
         setSummaryData({
           totalSales: 0,
           totalOrders: 0,
@@ -1153,63 +1413,61 @@ export default function App() {
         setLoading(false);
       }
     };
+
     fetchAllDashboardData();
   }, [
     selectedTimePeriod,
     selectedRestaurant,
-    selectedProduct,
     selectedMachine,
     selectedTransactionType,
-    selectedDeliveryChannel, // New dependency
-    selectedPod, // New dependency
-    currentView, // Crucial dependency for changing views
+    selectedDeliveryChannel,
+    selectedPod,
+    currentView,
+    selectedProductHierarchy, // Include the new hierarchy state here
   ]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow-sm p-2 flex justify-between items-center">
+      <header className="bg-white shadow-sm p-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">
-          Restaurant Sales Dashboard
+          Restaurant Analytics Dashboard
         </h1>
-        <div className="flex space-x-1">
+        <div className="flex space-x-4">
           <button
-            onClick={() => setCurrentView("sales")}
-            className={`px-4 py-0 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
               currentView === "sales"
-                ? "bg-indigo-600 text-white shadow"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-indigo-500 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
+            onClick={() => setCurrentView("sales")}
           >
-            Sales View
+            <BarChart2 className="inline-block mr-2" size={18} /> Sales Overview
           </button>
           <button
-            onClick={() => setCurrentView("product")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
               currentView === "product"
-                ? "bg-indigo-600 text-white shadow"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-indigo-500 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
+            onClick={() => setCurrentView("product")}
           >
-            Product View
+            <Coffee className="inline-block mr-2" size={18} /> Product Insights
           </button>
           <button
-            onClick={() => setCurrentView("store")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
               currentView === "store"
-                ? "bg-indigo-600 text-white shadow"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-indigo-500 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
+            onClick={() => setCurrentView("store")}
           >
-            Store View
+            <Store className="inline-block mr-2" size={18} /> Store Performance
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 p-2">
-        {/* Filters */}
-        <div className="bg-white p-2 rounded-lg shadow-md mb-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-7 gap-4">
+      <main className="flex-1 p-2 overflow-y-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-2">
           <div>
             <label
               htmlFor="timePeriod"
@@ -1266,34 +1524,7 @@ export default function App() {
             </div>
           </div>
 
-          {currentView === "sales" && (
-            <div>
-              <label
-                htmlFor="product"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Product
-              </label>
-              <div className="relative">
-                <select
-                  id="product"
-                  value={selectedProduct}
-                  onChange={(e) => setSelectedProduct(e.target.value)}
-                  className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
-                >
-                  <option value="all">All Products</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                  <Coffee className="h-5 w-5" />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Removed the simple "Product" dropdown, now using ProductFilter */}
 
           <div>
             <label
@@ -1311,8 +1542,8 @@ export default function App() {
               >
                 <option value="all">All Machines</option>
                 {machines.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
+                  <option key={m.id} value={m.id}>
+                    {m.name}
                   </option>
                 ))}
               </select>
@@ -1337,14 +1568,14 @@ export default function App() {
                 className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
               >
                 <option value="all">All Types</option>
-                {transactionTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                {transactionTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
                   </option>
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <ShoppingBag className="h-5 w-5" />
+                <Tag className="h-5 w-5" />
               </div>
             </div>
           </div>
@@ -1364,9 +1595,9 @@ export default function App() {
                 className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
               >
                 <option value="all">All Channels</option>
-                {deliveryChannels.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
+                {deliveryChannels.map((channel) => (
+                  <option key={channel} value={channel}>
+                    {channel}
                   </option>
                 ))}
               </select>
@@ -1404,28 +1635,38 @@ export default function App() {
           </div>
         </div>
 
-        {loading && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading dashboard data...</p>
+        <ProductFilter
+          products={allProductsFlat}
+          selectedProductHierarchy={selectedProductHierarchy}
+          onSelectProductHierarchy={setSelectedProductHierarchy}
+        />
+
+        {error && (
+          <div
+            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+            role="alert"
+          >
+            <strong className="font-bold">Error:</strong>
+            <span className="block sm:inline"> {error}</span>
           </div>
         )}
 
-        {error && (
-          <div className="p-6 text-center text-red-500 text-lg">{error}</div>
-        )}
-
-        {!loading && !error && (
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+          </div>
+        ) : (
           <>
+            <SummaryCards
+              totalSales={summaryData.totalSales}
+              totalOrders={summaryData.totalOrders}
+              avgOrderValue={summaryData.avgOrderValue}
+              totalInvoices={summaryData.totalInvoices}
+              selectedTimePeriod={selectedTimePeriod}
+            />
+
             {currentView === "sales" && (
               <>
-                <SummaryCards
-                  totalSales={summaryData.totalSales}
-                  totalOrders={summaryData.totalOrders}
-                  avgOrderValue={summaryData.avgOrderValue}
-                  totalInvoices={summaryData.totalInvoices}
-                  selectedTimePeriod={selectedTimePeriod}
-                />
                 <SalesCharts
                   dailySales={dailySalesData}
                   hourlySales={hourlySalesData}
