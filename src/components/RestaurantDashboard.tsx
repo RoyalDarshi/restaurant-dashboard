@@ -102,6 +102,12 @@ interface FilterOption {
   city?: string;
 }
 
+// New interface for OC/OM options
+interface OcOmOption {
+  email: string;
+  name: string;
+}
+
 interface CardProps {
   title: string;
   value: string | number;
@@ -369,6 +375,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
               <Tooltip
                 formatter={(value: number) => formatIndianCurrency(value)}
               />
+              {/* <Legend /> */}
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -630,151 +637,178 @@ interface OcOmStoreSummaryData {
   totalInvoices: number;
 }
 
+// New interface for aggregated OC/OM sales data
+interface OcOmAggregatedData {
+  email: string;
+  name: string;
+  totalSales: number;
+  totalOrders: number;
+  avgOrderValue: number;
+  totalInvoices: number;
+}
+
 interface OcOmChartsProps {
   salesByOcOmStoreSummary: OcOmStoreSummaryData[];
+  ocSalesSummary: OcOmAggregatedData[]; // New prop
+  omSalesSummary: OcOmAggregatedData[]; // New prop
   selectedOcOmFilterType: "all" | "oc" | "om";
+  selectedOcOmEmail: string; // New prop to determine if a specific OC/OM is selected
+  selectedTimePeriod: string; // Pass selected time period for SummaryCards
 }
 
 const OcOmCharts: React.FC<OcOmChartsProps> = ({
   salesByOcOmStoreSummary,
   selectedOcOmFilterType,
+  selectedOcOmEmail,
 }) => {
-  if (
-    selectedOcOmFilterType === "all" ||
-    salesByOcOmStoreSummary.length === 0
-  ) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-4 text-center text-gray-600">
-        Please select an OC or OM to view store-wise performance.
-      </div>
-    );
-  }
-
+  // Always render the four store-wise charts
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      {/* Total Sales by Store */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold mb-4 text-gray-700">
-          Total Sales by Store ({selectedOcOmFilterType === "oc" ? "OC" : "OM"}{" "}
-          View)
-        </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            layout="vertical"
-            data={salesByOcOmStoreSummary}
-            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis
-              type="number"
-              stroke="#666"
-              formatter={(value: number) => formatIndianCurrency(value)}
-            />
-            <YAxis
-              type="category"
-              dataKey="storeName"
-              stroke="#666"
-              width={100}
-            />
-            <Tooltip
-              formatter={(value: number) => formatIndianCurrency(value)}
-            />
-            <Legend />
-            <Bar dataKey="totalSales" fill={COLORS[0]} name="Total Sales" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      {salesByOcOmStoreSummary.length > 0 ? (
+        <>
+          {/* Total Sales by Store */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-700">
+              Total Sales by Store
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                layout="horizontal" // Changed to horizontal layout
+                data={salesByOcOmStoreSummary}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis
+                  type="category" // Changed to category type
+                  dataKey="storeName" // Data key for store names
+                  stroke="#666"
+                  angle={-45} // Rotate labels for better readability
+                  textAnchor="end"
+                  height={80} // Adjust height for rotated labels
+                />
+                <YAxis
+                  type="number" // Changed to number type
+                  stroke="#666"
+                  formatter={(value: number) => formatIndianCurrency(value)}
+                />
+                <Tooltip
+                  formatter={(value: number) => formatIndianCurrency(value)}
+                />
+                <Legend />
+                <Bar dataKey="totalSales" fill={COLORS[0]} name="Total Sales" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
 
-      {/* Total Orders by Store */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold mb-4 text-gray-700">
-          Total Orders by Store ({selectedOcOmFilterType === "oc" ? "OC" : "OM"}{" "}
-          View)
-        </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            layout="vertical"
-            data={salesByOcOmStoreSummary}
-            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis type="number" stroke="#666" />
-            <YAxis
-              type="category"
-              dataKey="storeName"
-              stroke="#666"
-              width={100}
-            />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="totalOrders" fill={COLORS[1]} name="Total Orders" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+          {/* Total Orders by Store */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-700">
+              Total Orders by Store
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                layout="horizontal" // Changed to horizontal layout
+                data={salesByOcOmStoreSummary}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis
+                  type="category" // Changed to category type
+                  dataKey="storeName" // Data key for store names
+                  stroke="#666"
+                  angle={-45} // Rotate labels for better readability
+                  textAnchor="end"
+                  height={80} // Adjust height for rotated labels
+                />
+                <YAxis
+                  type="number" // Changed to number type
+                  stroke="#666"
+                />
+                <Tooltip />
+                <Legend />
+                <Bar
+                  dataKey="totalOrders"
+                  fill={COLORS[1]}
+                  name="Total Orders"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
 
-      {/* Average Order Value by Store */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold mb-4 text-gray-700">
-          Average Order Value by Store (
-          {selectedOcOmFilterType === "oc" ? "OC" : "OM"} View)
-        </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            layout="vertical"
-            data={salesByOcOmStoreSummary}
-            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis
-              type="number"
-              stroke="#666"
-              formatter={(value: number) => formatIndianCurrency(value)}
-            />
-            <YAxis
-              type="category"
-              dataKey="storeName"
-              stroke="#666"
-              width={100}
-            />
-            <Tooltip
-              formatter={(value: number) => formatIndianCurrency(value)}
-            />
-            <Legend />
-            <Bar
-              dataKey="avgOrderValue"
-              fill={COLORS[2]}
-              name="Avg. Order Value"
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+          {/* Average Order Value by Store */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-700">
+              Average Order Value by Store
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                layout="horizontal" // Changed to horizontal layout
+                data={salesByOcOmStoreSummary}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis
+                  type="category" // Changed to category type
+                  dataKey="storeName" // Data key for store names
+                  stroke="#666"
+                  angle={-45} // Rotate labels for better readability
+                  textAnchor="end"
+                  height={80} // Adjust height for rotated labels
+                />
+                <YAxis
+                  type="number" // Changed to number type
+                  stroke="#666"
+                  formatter={(value: number) => formatIndianCurrency(value)}
+                />
+                <Tooltip
+                  formatter={(value: number) => formatIndianCurrency(value)}
+                />
+                <Legend />
+                <Bar
+                  dataKey="avgOrderValue"
+                  fill={COLORS[2]}
+                  name="Avg. Order Value"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
 
-      {/* Total Invoices by Store */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold mb-4 text-gray-700">
-          Total GC by Store ({selectedOcOmFilterType === "oc" ? "OC" : "OM"}{" "}
-          View)
-        </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            layout="vertical"
-            data={salesByOcOmStoreSummary}
-            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis type="number" stroke="#666" />
-            <YAxis
-              type="category"
-              dataKey="storeName"
-              stroke="#666"
-              width={100}
-            />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="totalInvoices" fill={COLORS[3]} name="Total GC" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+          {/* Total Invoices by Store (Total GC) */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-700">
+              Total GC by Store
+            </h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                layout="horizontal" // Changed to horizontal layout
+                data={salesByOcOmStoreSummary}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis
+                  type="category" // Changed to category type
+                  dataKey="storeName" // Data key for store names
+                  stroke="#666"
+                  angle={-45} // Rotate labels for better readability
+                  textAnchor="end"
+                  height={80} // Adjust height for rotated labels
+                />
+                <YAxis
+                  type="number" // Changed to number type
+                  stroke="#666"
+                />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="totalInvoices" fill={COLORS[3]} name="Total GC" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      ) : (
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-4 text-center text-gray-600 lg:col-span-2">
+          No store-wise sales data available for the selected filters.
+        </div>
+      )}
     </div>
   );
 };
@@ -1244,7 +1278,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
               onSelect={onSelect}
               currentHierarchy={currentHierarchy}
               path={[...path, childNode.name]}
-              closeDropdown={closeDropdown}
+              closeDropdown={() => setIsDropdownOpen(false)}
             />
           ))}
         </ul>
@@ -1565,11 +1599,10 @@ export default function App() {
   const [selectedMachine, setSelectedMachine] = useState("all");
   const [selectedTransactionType, setSelectedTransactionType] = useState("all");
   const [selectedDeliveryChannel, setSelectedDeliveryChannel] = useState("all");
-  // Removed selectedPod state
   const [selectedOcOmFilterType, setSelectedOcOmFilterType] = useState<
     "all" | "oc" | "om"
-  >("all"); // New state for OC/OM filter type
-  const [selectedOcOmEmail, setSelectedOcOmEmail] = useState("all"); // New state for selected OC/OM email
+  >("all");
+  const [selectedOcOmEmail, setSelectedOcOmEmail] = useState("all");
   const [currentView, setCurrentView] = useState("sales");
 
   const [restaurants, setRestaurants] = useState<FilterOption[]>([]);
@@ -1578,9 +1611,8 @@ export default function App() {
   const [machines, setMachines] = useState<FilterOption[]>([]);
   const [transactionTypes, setTransactionTypes] = useState<string[]>([]);
   const [deliveryChannels, setDeliveryChannels] = useState<string[]>([]);
-  // Removed pods state
-  const [ocEmailIds, setOcEmailIds] = useState<string[]>([]); // New state for OC emails
-  const [omEmailIds, setOmEmailIds] = useState<string[]>([]); // New state for OM emails
+  const [ocOptions, setOcOptions] = useState<OcOmOption[]>([]);
+  const [omOptions, setOmOptions] = useState<OcOmOption[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -1616,12 +1648,15 @@ export default function App() {
   const [salesByDeliveryChannelData, setSalesByDeliveryChannelData] = useState<
     { name: string; value: number }[]
   >([]);
-  // Removed salesByPodData state
   const [salesByOcOmStoreSummaryData, setSalesByOcOmStoreSummaryData] =
-    useState<
-      // New state for OC/OM store summary
-      OcOmStoreSummaryData[]
-    >([]);
+    useState<OcOmStoreSummaryData[]>([]);
+  const [ocSalesSummaryData, setOcSalesSummaryData] = useState<
+    OcOmAggregatedData[]
+  >([]);
+  const [omSalesSummaryData, setOmSalesSummaryData] = useState<
+    OcOmAggregatedData[]
+  >([]);
+
   const [filteredTransactions, setFilteredTransactions] = useState<
     Transaction[]
   >([]);
@@ -1653,9 +1688,8 @@ export default function App() {
         setMachines(data.machines);
         setTransactionTypes(data.transactionTypes);
         setDeliveryChannels(data.deliveryChannels);
-        // setPods(data.pods); // Removed PODs
-        setOcEmailIds(data.ocEmailIds); // Set OC emails
-        setOmEmailIds(data.omEmailIds); // Set OM emails
+        setOcOptions(data.ocEmailIds); // Set OC options with email and name
+        setOmOptions(data.omEmailIds); // Set OM options with email and name
       } catch (err: any) {
         console.error("Failed to fetch filter options:", err);
         setError("Failed to load filter options. " + err.message);
@@ -1681,7 +1715,7 @@ export default function App() {
           storeFilter = { type: "state", value: selectedStoreHierarchy.state };
         }
 
-        const commonParams: { [key: string]: string } = {
+        const baseCommonParams: { [key: string]: string } = {
           timePeriod: selectedTimePeriod,
           machineId: selectedMachine,
           transactionType: selectedTransactionType,
@@ -1689,7 +1723,7 @@ export default function App() {
         };
 
         if (storeFilter) {
-          commonParams.store = JSON.stringify(storeFilter);
+          baseCommonParams.store = JSON.stringify(storeFilter);
         }
 
         let productFilterParam: { type: string; value: string } | null = null;
@@ -1721,30 +1755,82 @@ export default function App() {
         }
 
         if (productFilterParam) {
-          commonParams.product = JSON.stringify(productFilterParam);
+          baseCommonParams.product = JSON.stringify(productFilterParam);
         }
 
-        // Add OC and OM filters to commonParams based on selectedOcOmFilterType
+        // Prepare common parameters for all fetches, including OC/OM filters if applicable
+        const commonParamsForCharts = { ...baseCommonParams };
         if (selectedOcOmFilterType === "oc" && selectedOcOmEmail !== "all") {
-          commonParams.ocEmailId = selectedOcOmEmail;
+          commonParamsForCharts.ocEmailId = selectedOcOmEmail;
         } else if (
           selectedOcOmFilterType === "om" &&
           selectedOcOmEmail !== "all"
         ) {
-          commonParams.omEmailId = selectedOcOmEmail;
+          commonParamsForCharts.omEmailId = selectedOcOmEmail;
+        }
+        const queryStringForCharts = new URLSearchParams(
+          commonParamsForCharts
+        ).toString();
+
+        // --- Handle Summary Data Fetching ---
+        if (currentView === "oc_om") {
+          // Always fetch store-wise summary for OC/OM view
+          // If selectedOcOmEmail is "all", it will fetch for all stores under the selected OC/OM type (or all if type is "all")
+          const ocOmStoreSummaryResponse = await fetch(
+            `${API_BASE_URL}/sales/by-oc-om-store-summary?${queryStringForCharts}`
+          );
+          if (!ocOmStoreSummaryResponse.ok)
+            throw new Error(
+              `Sales by OC/OM store summary fetch failed: ${ocOmStoreSummaryResponse.status}`
+            );
+          const fetchedStoreSummary = await ocOmStoreSummaryResponse.json();
+          setSalesByOcOmStoreSummaryData(fetchedStoreSummary);
+
+          // Calculate overall summary from the fetched store summary data
+          const calculatedSummary = fetchedStoreSummary.reduce(
+            (
+              acc: {
+                totalSales: number;
+                totalOrders: number;
+                totalInvoices: number;
+              },
+              curr: OcOmStoreSummaryData
+            ) => {
+              acc.totalSales += curr.totalSales;
+              acc.totalOrders += curr.totalOrders;
+              acc.totalInvoices += curr.totalInvoices;
+              return acc;
+            },
+            { totalSales: 0, totalOrders: 0, totalInvoices: 0 }
+          );
+          const calculatedAvgOrderValue =
+            calculatedSummary.totalOrders > 0
+              ? calculatedSummary.totalSales / calculatedSummary.totalOrders
+              : 0;
+
+          setSummaryData({
+            totalSales: calculatedSummary.totalSales,
+            totalOrders: calculatedSummary.totalOrders,
+            avgOrderValue: calculatedAvgOrderValue,
+            totalInvoices: calculatedSummary.totalInvoices,
+          });
+          setOcSalesSummaryData([]); // Clear aggregated OC sales when viewing specific
+          setOmSalesSummaryData([]); // Clear aggregated OM sales when viewing specific
+        } else {
+          // For other views (sales, product, store), fetch summary as usual
+          const summaryResponse = await fetch(
+            `${API_BASE_URL}/sales/summary?${queryStringForCharts}`
+          );
+          if (!summaryResponse.ok)
+            throw new Error(`Summary fetch failed: ${summaryResponse.status}`);
+          const summary = await summaryResponse.json();
+          setSummaryData(summary);
+          setOcSalesSummaryData([]); // Clear OC/OM data when not in their view
+          setOmSalesSummaryData([]);
+          setSalesByOcOmStoreSummaryData([]);
         }
 
-        const queryString = new URLSearchParams(commonParams).toString();
-
-        const summaryResponse = await fetch(
-          `${API_BASE_URL}/sales/summary?${queryString}`
-        );
-        if (!summaryResponse.ok)
-          throw new Error(`Summary fetch failed: ${summaryResponse.status}`);
-        const summary = await summaryResponse.json();
-        setSummaryData(summary);
-
-        // Clear all chart data before fetching for the current view
+        // Clear all chart data before fetching for the current view (already done above, but keeping for clarity)
         setDailySalesData([]);
         setHourlySalesData([]);
         setSalesByRestaurantData([]);
@@ -1754,11 +1840,11 @@ export default function App() {
         setSalesByItemDayPartData([]);
         setSalesBySaleTypeData([]);
         setSalesByDeliveryChannelData([]);
-        setSalesByOcOmStoreSummaryData([]);
 
+        // --- Handle Chart Data Fetching (remains largely the same, but uses queryStringForCharts) ---
         if (currentView === "sales") {
           const dailyResponse = await fetch(
-            `${API_BASE_URL}/sales/daily-trend?${queryString}`
+            `${API_BASE_URL}/sales/daily-trend?${queryStringForCharts}`
           );
           if (!dailyResponse.ok)
             throw new Error(
@@ -1767,7 +1853,7 @@ export default function App() {
           setDailySalesData(await dailyResponse.json());
 
           const hourlyResponse = await fetch(
-            `${API_BASE_URL}/sales/hourly-trend?${queryString}`
+            `${API_BASE_URL}/sales/hourly-trend?${queryStringForCharts}`
           );
           if (!hourlyResponse.ok)
             throw new Error(
@@ -1777,7 +1863,7 @@ export default function App() {
 
           if (selectedStoreHierarchy.state === "all") {
             const byRestaurantResponse = await fetch(
-              `${API_BASE_URL}/sales/by-restaurant?${queryString}`
+              `${API_BASE_URL}/sales/by-restaurant?${queryStringForCharts}`
             );
             if (!byRestaurantResponse.ok)
               throw new Error(
@@ -1789,7 +1875,7 @@ export default function App() {
           }
 
           const byProductResponse = await fetch(
-            `${API_BASE_URL}/sales/by-product?${queryString}`
+            `${API_BASE_URL}/sales/by-product?${queryStringForCharts}`
           );
           if (!byProductResponse.ok)
             throw new Error(
@@ -1798,7 +1884,7 @@ export default function App() {
           setSalesByProductData(await byProductResponse.json());
         } else if (currentView === "product") {
           const byProductDescriptionResponse = await fetch(
-            `${API_BASE_URL}/product/by-description?${queryString}`
+            `${API_BASE_URL}/product/by-description?${queryStringForCharts}`
           );
           if (!byProductDescriptionResponse.ok)
             throw new Error(
@@ -1809,7 +1895,7 @@ export default function App() {
           );
 
           const byFamilyGroupResponse = await fetch(
-            `${API_BASE_URL}/product/by-family-group?${queryString}`
+            `${API_BASE_URL}/product/by-family-group?${queryStringForCharts}`
           );
           if (!byFamilyGroupResponse.ok)
             throw new Error(
@@ -1818,7 +1904,7 @@ export default function App() {
           setSalesByItemFamilyGroupData(await byFamilyGroupResponse.json());
 
           const byDayPartResponse = await fetch(
-            `${API_BASE_URL}/product/by-day-part?${queryString}`
+            `${API_BASE_URL}/product/by-day-part?${queryStringForCharts}`
           );
           if (!byDayPartResponse.ok)
             throw new Error(
@@ -1827,7 +1913,7 @@ export default function App() {
           setSalesByItemDayPartData(await byDayPartResponse.json());
         } else if (currentView === "store") {
           const bySaleTypeResponse = await fetch(
-            `${API_BASE_URL}/sales/by-sale-type?${queryString}`
+            `${API_BASE_URL}/sales/by-sale-type?${queryStringForCharts}`
           );
           if (!bySaleTypeResponse.ok)
             throw new Error(
@@ -1836,33 +1922,18 @@ export default function App() {
           setSalesBySaleTypeData(await bySaleTypeResponse.json());
 
           const byDeliveryChannelResponse = await fetch(
-            `${API_BASE_URL}/sales/by-delivery-channel?${queryString}`
+            `${API_BASE_URL}/sales/by-delivery-channel?${queryStringForCharts}`
           );
           if (!byDeliveryChannelResponse.ok)
             throw new Error(
               `Sales by delivery channel fetch failed: ${byDeliveryChannelResponse.status}`
             );
           setSalesByDeliveryChannelData(await byDeliveryChannelResponse.json());
-        } else if (currentView === "oc_om") {
-          // New view for OC/OM
-          if (selectedOcOmFilterType !== "all" && selectedOcOmEmail !== "all") {
-            const ocOmStoreSummaryResponse = await fetch(
-              `${API_BASE_URL}/sales/by-oc-om-store-summary?${queryString}`
-            );
-            if (!ocOmStoreSummaryResponse.ok)
-              throw new Error(
-                `Sales by OC/OM store summary fetch failed: ${ocOmStoreSummaryResponse.status}`
-              );
-            setSalesByOcOmStoreSummaryData(
-              await ocOmStoreSummaryResponse.json()
-            );
-          } else {
-            setSalesByOcOmStoreSummaryData([]);
-          }
         }
+        // OC/OM chart data fetching is already handled above within the summary logic for currentView === "oc_om"
 
         const transactionsResponse = await fetch(
-          `${API_BASE_URL}/sales?${queryString}`
+          `${API_BASE_URL}/sales?${queryStringForCharts}`
         );
         if (!transactionsResponse.ok)
           throw new Error(
@@ -1875,6 +1946,7 @@ export default function App() {
           "Failed to load data. Please ensure the backend server is running and configured correctly. Error: " +
             err.message
         );
+        // Reset all data states on error
         setSummaryData({
           totalSales: 0,
           totalOrders: 0,
@@ -1891,6 +1963,8 @@ export default function App() {
         setSalesBySaleTypeData([]);
         setSalesByDeliveryChannelData([]);
         setSalesByOcOmStoreSummaryData([]);
+        setOcSalesSummaryData([]);
+        setOmSalesSummaryData([]);
         setFilteredTransactions([]);
       } finally {
         setLoading(false);
@@ -1903,8 +1977,8 @@ export default function App() {
     selectedMachine,
     selectedTransactionType,
     selectedDeliveryChannel,
-    selectedOcOmFilterType, // Added to dependencies
-    selectedOcOmEmail, // Added to dependencies
+    selectedOcOmFilterType,
+    selectedOcOmEmail,
     currentView,
     selectedProductHierarchy,
     selectedStoreHierarchy,
@@ -1914,6 +1988,12 @@ export default function App() {
   useEffect(() => {
     setSelectedOcOmEmail("all");
   }, [selectedOcOmFilterType]);
+
+  // Reset OC/OM filters when currentView changes
+  useEffect(() => {
+    setSelectedOcOmFilterType("all");
+    setSelectedOcOmEmail("all");
+  }, [currentView]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
@@ -2044,44 +2124,49 @@ export default function App() {
               ))}
             </select>
           </div>
-          {/* OC/OM Filter Type Dropdown */}
-          <div className="flex items-center space-x-2">
-            <User className="text-gray-500" />
-            <select
-              value={selectedOcOmFilterType}
-              onChange={(e) =>
-                setSelectedOcOmFilterType(e.target.value as "all" | "oc" | "om")
-              }
-              className="rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <option value="all">All OC/OMs</option>
-              <option value="oc">Operations Consultant (OC)</option>
-              <option value="om">Operations Manager (OM)</option>
-            </select>
-          </div>
-          {/* Conditional OC/OM Email Dropdown */}
-          {(selectedOcOmFilterType === "oc" ||
-            selectedOcOmFilterType === "om") && (
-            <div className="flex items-center space-x-2">
-              <User className="text-gray-500" />
-              <select
-                value={selectedOcOmEmail}
-                onChange={(e) => setSelectedOcOmEmail(e.target.value)}
-                className="rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <option value="all">
-                  All {selectedOcOmFilterType === "oc" ? "OCs" : "OMs"}
-                </option>
-                {(selectedOcOmFilterType === "oc"
-                  ? ocEmailIds
-                  : omEmailIds
-                ).map((email) => (
-                  <option key={email} value={email}>
-                    {email}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* OC/OM Filter Type and Email/Name Dropdowns - Only show in OC/OM view */}
+          {currentView === "oc_om" && (
+            <>
+              <div className="flex items-center space-x-2">
+                <User className="text-gray-500" />
+                <select
+                  value={selectedOcOmFilterType}
+                  onChange={(e) =>
+                    setSelectedOcOmFilterType(
+                      e.target.value as "all" | "oc" | "om"
+                    )
+                  }
+                  className="rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <option value="all">All OC/OMs</option>
+                  <option value="oc">Operations Consultant (OC)</option>
+                  <option value="om">Operations Manager (OM)</option>
+                </select>
+              </div>
+              {(selectedOcOmFilterType === "oc" ||
+                selectedOcOmFilterType === "om") && (
+                <div className="flex items-center space-x-2">
+                  <User className="text-gray-500" />
+                  <select
+                    value={selectedOcOmEmail}
+                    onChange={(e) => setSelectedOcOmEmail(e.target.value)}
+                    className="rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    <option value="all">
+                      All {selectedOcOmFilterType === "oc" ? "OCs" : "OMs"}
+                    </option>
+                    {(selectedOcOmFilterType === "oc"
+                      ? ocOptions
+                      : omOptions
+                    ).map((option) => (
+                      <option key={option.email} value={option.email}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </>
           )}
         </div>
         {loading ? (
@@ -2090,6 +2175,7 @@ export default function App() {
           </div>
         ) : (
           <>
+            {/* SummaryCards always visible */}
             <SummaryCards
               totalSales={summaryData.totalSales}
               totalOrders={summaryData.totalOrders}
@@ -2122,7 +2208,11 @@ export default function App() {
             {currentView === "oc_om" && ( // Render new OC/OM charts
               <OcOmCharts
                 salesByOcOmStoreSummary={salesByOcOmStoreSummaryData}
+                ocSalesSummary={ocSalesSummaryData} // Pass new data
+                omSalesSummary={omSalesSummaryData} // Pass new data
                 selectedOcOmFilterType={selectedOcOmFilterType}
+                selectedOcOmEmail={selectedOcOmEmail} // Pass selected email
+                selectedTimePeriod={selectedTimePeriod} // Pass selected time period
               />
             )}
             <TransactionsTable filteredTransactions={filteredTransactions} />
