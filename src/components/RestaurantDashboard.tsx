@@ -2215,7 +2215,9 @@ export default function App() {
                 selectedTimePeriod={selectedTimePeriod} // Pass selected time period
               />
             )}
-            <TransactionsTable filteredTransactions={filteredTransactions} />
+            {currentView === "sales" && (
+              <TransactionsTable filteredTransactions={filteredTransactions} />
+            )}
           </>
         )}
       </main>
