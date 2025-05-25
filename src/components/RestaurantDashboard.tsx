@@ -815,24 +815,22 @@ const OcOmCharts: React.FC<OcOmChartsProps> = ({
 
 interface TransactionsTableProps {
   filteredTransactions: Transaction[];
+  totalTransactions: number;
+  currentPage: number;
+  itemsPerPage: number;
+  onPageChange: (pageNumber: number) => void;
 }
 
 const TransactionsTable: React.FC<TransactionsTableProps> = ({
   filteredTransactions,
+  totalTransactions,
+  currentPage,
+  itemsPerPage,
+  onPageChange,
 }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const totalPages = Math.ceil(totalTransactions / itemsPerPage);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredTransactions.slice(
-    indexOfFirstItem,
-    indexOfLastItem
-  );
-
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const paginate = (pageNumber: number) => onPageChange(pageNumber);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
@@ -874,7 +872,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {currentItems.map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <tr key={transaction.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {transaction.id}
@@ -911,7 +909,8 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
       </div>
       <div className="px-6 py-4 flex items-center justify-between">
         <p className="text-sm text-gray-700 sm:mb-0">
-          Page {currentPage} of {totalPages}
+          Page {currentPage} of {totalPages} (Total: {totalTransactions}{" "}
+          transactions)
         </p>
         <nav className="flex space-x-1" aria-label="Pagination">
           <button
@@ -1657,9 +1656,20 @@ export default function App() {
     OcOmAggregatedData[]
   >([]);
 
-  const [filteredTransactions, setFilteredTransactions] = useState<
-    Transaction[]
-  >([]);
+  // State for pagination
+  const [transactionsData, setTransactionsData] = useState<{
+    transactions: Transaction[];
+    totalCount: number;
+    currentPage: number;
+    totalPages: number;
+  }>({
+    transactions: [],
+    totalCount: 0,
+    currentPage: 1,
+    totalPages: 1,
+  });
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const transactionsLimit = 10; // Number of transactions per page
 
   const [selectedProductHierarchy, setSelectedProductHierarchy] = useState({
     subcategory_1: "all",
@@ -1932,14 +1942,16 @@ export default function App() {
         }
         // OC/OM chart data fetching is already handled above within the summary logic for currentView === "oc_om"
 
+        // Fetch paginated transactions
         const transactionsResponse = await fetch(
-          `${API_BASE_URL}/sales?${queryStringForCharts}`
+          `${API_BASE_URL}/sales?${queryStringForCharts}&page=${transactionsPage}&limit=${transactionsLimit}`
         );
         if (!transactionsResponse.ok)
           throw new Error(
             `Transactions fetch failed: ${transactionsResponse.status}`
           );
-        setFilteredTransactions(await transactionsResponse.json());
+        const transactionsPagedData = await transactionsResponse.json();
+        setTransactionsData(transactionsPagedData);
       } catch (err: any) {
         console.error("Failed to fetch dashboard data:", err);
         setError(
@@ -1965,7 +1977,12 @@ export default function App() {
         setSalesByOcOmStoreSummaryData([]);
         setOcSalesSummaryData([]);
         setOmSalesSummaryData([]);
-        setFilteredTransactions([]);
+        setTransactionsData({
+          transactions: [],
+          totalCount: 0,
+          currentPage: 1,
+          totalPages: 1,
+        });
       } finally {
         setLoading(false);
       }
@@ -1982,6 +1999,7 @@ export default function App() {
     currentView,
     selectedProductHierarchy,
     selectedStoreHierarchy,
+    transactionsPage, // Add transactionsPage to dependencies
   ]);
 
   // Reset selectedOcOmEmail when selectedOcOmFilterType changes
@@ -2216,7 +2234,13 @@ export default function App() {
               />
             )}
             {currentView === "sales" && (
-              <TransactionsTable filteredTransactions={filteredTransactions} />
+              <TransactionsTable
+                filteredTransactions={transactionsData.transactions}
+                totalTransactions={transactionsData.totalCount}
+                currentPage={transactionsData.currentPage}
+                itemsPerPage={transactionsLimit}
+                onPageChange={setTransactionsPage}
+              />
             )}
           </>
         )}
