@@ -30,24 +30,26 @@ import {
   Store,
   Truck,
   Tag,
+  ChevronRight,
 } from "lucide-react";
 
 const API_BASE_URL = "http://localhost:3001/api";
 
+// Professional and cohesive color palette
 const COLORS = [
-  "#6366F1",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
-  "#06B6D4",
-  "#EC4899",
-  "#A8A29E",
-  "#34D399",
-  "#FB923C",
-  "#F87171",
-  "#C084FC",
-  "#22D3EE",
+  "#4F46E5", // Indigo-600
+  "#059669", // Emerald-600
+  "#D97706", // Amber-600
+  "#DC2626", // Red-600
+  "#7C3AED", // Violet-600
+  "#0891B2", // Cyan-600
+  "#E11D48", // Rose-600
+  "#6B7280", // Gray-500
+  "#10B981", // Green-500
+  "#F59E0B", // Orange-500
+  "#EF4444", // Red-500
+  "#8B5CF6", // Purple-500
+  "#22D3EE", // Aqua-500
 ];
 
 const formatIndianCurrency = (value: number) => {
@@ -105,11 +107,11 @@ const Card: React.FC<CardProps> = ({
   value,
   icon,
   description,
-  color = "text-indigo-500",
+  color = "text-indigo-600", // Updated default color
 }) => (
-  <div className="bg-white p-2 rounded-lg shadow-md flex items-center space-x-1">
+  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center space-x-4 hover:shadow-md transition-shadow duration-200">
     <div
-      className={`p-3 rounded-full bg-opacity-20 ${color.replace(
+      className={`p-3 rounded-full bg-opacity-15 ${color.replace(
         "text-",
         "bg-"
       )}`}
@@ -117,8 +119,8 @@ const Card: React.FC<CardProps> = ({
       {icon}
     </div>
     <div>
-      <p className="text-gray-500 text-sm">{title}</p>
-      <p className="text-2xl font-bold text-gray-800">{value}</p>
+      <p className="text-gray-500 text-sm font-medium">{title}</p>
+      <p className="text-2xl font-semibold text-gray-800">{value}</p>
       {description && (
         <p className="text-gray-400 text-xs mt-1">{description}</p>
       )}
@@ -141,34 +143,34 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
   totalInvoices,
   selectedTimePeriod,
 }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mb-1">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
     <Card
       title="Total Sales"
       value={formatIndianCurrency(totalSales)}
-      icon={<TrendingUp className="text-indigo-500" />}
+      icon={<TrendingUp className="text-indigo-600" />}
       description={`Sales ${selectedTimePeriod}`}
-      color="text-indigo-500"
+      color="text-indigo-600"
     />
     <Card
       title="Total Orders"
       value={totalOrders.toLocaleString()}
-      icon={<ShoppingBag className="text-emerald-500" />}
+      icon={<ShoppingBag className="text-emerald-600" />}
       description={`Orders ${selectedTimePeriod}`}
-      color="text-emerald-500"
+      color="text-emerald-600"
     />
     <Card
       title="Average Order Value"
       value={formatIndianCurrency(avgOrderValue)}
-      icon={<Utensils className="text-amber-500" />}
+      icon={<Utensils className="text-amber-600" />}
       description={`Avg. per order ${selectedTimePeriod}`}
-      color="text-amber-500"
+      color="text-amber-600"
     />
     <Card
       title="Total GC"
       value={totalInvoices.toLocaleString()}
-      icon={<ReceiptText className="text-violet-500" />}
+      icon={<ReceiptText className="text-violet-600" />}
       description={`Invoices ${selectedTimePeriod}`}
-      color="text-violet-500"
+      color="text-violet-600"
     />
   </div>
 );
@@ -188,8 +190,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
   salesByProduct,
   selectedRestaurant,
 }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
-    <div className="bg-white p-2 rounded-lg shadow-md">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <h3 className="text-lg font-semibold mb-4 text-gray-700">
         Daily Sales Performance
       </h3>
@@ -206,14 +208,14 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
           <Line
             type="monotone"
             dataKey="sales"
-            stroke="#6366F1"
+            stroke={COLORS[0]} // Using professional palette
             strokeWidth={2}
             dot={false}
           />
         </LineChart>
       </ResponsiveContainer>
     </div>
-    <div className="bg-white p-2 rounded-lg shadow-md">
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <h3 className="text-lg font-semibold mb-4 text-gray-700">
         Hourly Sales Distribution
       </h3>
@@ -227,12 +229,13 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
           <YAxis stroke="#666" />
           <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
           <Legend />
-          <Bar dataKey="sales" fill="#10B981" />
+          <Bar dataKey="sales" fill={COLORS[1]} />{" "}
+          {/* Using professional palette */}
         </BarChart>
       </ResponsiveContainer>
     </div>
     {selectedRestaurant === "all" && salesByRestaurant.length > 0 && (
-      <div className="bg-white p-2 rounded-lg shadow-md lg:col-span-1">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-1">
         <h3 className="text-lg font-semibold mb-4 text-gray-700">
           Sales Breakdown by Restaurant
         </h3>
@@ -266,7 +269,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
       </div>
     )}
     {salesByProduct.length > 0 && (
-      <div className="bg-white p-2 rounded-lg shadow-md lg:col-span-1">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-1">
         <h3 className="text-lg font-semibold mb-4 text-gray-700">
           Top Selling Products
         </h3>
@@ -287,7 +290,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
               formatter={(value: number) => formatIndianCurrency(value)}
             />
             <Legend />
-            <Bar dataKey="value" fill="#EF4444" />
+            <Bar dataKey="value" fill={COLORS[3]} />{" "}
+            {/* Using professional palette */}
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -306,10 +310,10 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
   salesByItemFamilyGroup,
   salesByItemDayPart,
 }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
     {salesByProductDescription.length > 0 && (
       <>
-        <div className="bg-white p-2 rounded-lg shadow-md lg:col-span-1">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-1">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Product-wise Sales Overview (Bar Chart)
           </h3>
@@ -330,11 +334,12 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
                 formatter={(value: number) => formatIndianCurrency(value)}
               />
               <Legend />
-              <Bar dataKey="value" fill="#8B5CF6" />
+              <Bar dataKey="value" fill={COLORS[4]} />{" "}
+              {/* Using professional palette */}
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-2 rounded-lg shadow-md lg:col-span-1">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-1">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Product-wise Sales Overview (Pie Chart)
           </h3>
@@ -366,7 +371,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
     )}
     {salesByItemFamilyGroup.length > 0 && (
       <>
-        <div className="bg-white p-2 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Product Category (Bar Chart)
           </h3>
@@ -387,11 +392,12 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
                 formatter={(value: number) => formatIndianCurrency(value)}
               />
               <Legend />
-              <Bar dataKey="value" fill="#06B6D4" />
+              <Bar dataKey="value" fill={COLORS[5]} />{" "}
+              {/* Using professional palette */}
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-2 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Product Category (Pie Chart)
           </h3>
@@ -424,7 +430,7 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
     )}
     {salesByItemDayPart.length > 0 && (
       <>
-        <div className="bg-white p-2 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Day Part (Bar Chart)
           </h3>
@@ -445,11 +451,12 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
                 formatter={(value: number) => formatIndianCurrency(value)}
               />
               <Legend />
-              <Bar dataKey="value" fill="#EC4899" />
+              <Bar dataKey="value" fill={COLORS[6]} />{" "}
+              {/* Using professional palette */}
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-2 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Day Part (Pie Chart)
           </h3>
@@ -494,10 +501,10 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
   salesByDeliveryChannel,
   salesByPod,
 }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
     {salesBySaleType.length > 0 && (
       <>
-        <div className="bg-white p-2 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Transaction Type (Bar Chart)
           </h3>
@@ -522,7 +529,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-2 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Transaction Type (Pie Chart)
           </h3>
@@ -555,7 +562,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
     )}
     {salesByDeliveryChannel.length > 0 && (
       <>
-        <div className="bg-white p-2 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Delivery Method (Bar Chart)
           </h3>
@@ -580,7 +587,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-2 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Delivery Method (Pie Chart)
           </h3>
@@ -613,7 +620,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
     )}
     {salesByPod.length > 0 && (
       <>
-        <div className="bg-white p-2 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Payment Method (Bar Chart)
           </h3>
@@ -638,7 +645,7 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white p-2 rounded-lg shadow-md">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Sales by Payment Method (Pie Chart)
           </h3>
@@ -694,49 +701,49 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
       <h3 className="text-lg font-semibold mb-4 text-gray-700">
         Transactions Detail
       </h3>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 ID
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Date
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Restaurant
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Product
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Machine
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Type
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Delivery Channel
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 POD
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Amount
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Quantity
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentItems.map((transaction) => (
-              <tr key={transaction.id}>
+              <tr key={transaction.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {transaction.id}
                 </td>
@@ -780,14 +787,14 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
           <button
             onClick={() => paginate(1)}
             disabled={currentPage === 1}
-            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             First
           </button>
           <button
             onClick={() => paginate(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             Prev
           </button>
@@ -811,9 +818,9 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                     onClick={() => paginate(page)}
                     className={`px-3 py-1 rounded-md text-sm border ${
                       currentPage === page
-                        ? "bg-indigo-500 text-white border-indigo-500"
-                        : "bg-white text-gray-700 hover:bg-gray-100"
-                    }`}
+                        ? "bg-indigo-600 text-white border-indigo-600"
+                        : "bg-white text-gray-700 hover:bg-gray-100 border-gray-300"
+                    } transition-colors duration-200`}
                   >
                     {page}
                   </button>
@@ -823,14 +830,14 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
           <button
             onClick={() => paginate(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             Next
           </button>
           <button
             onClick={() => paginate(totalPages)}
             disabled={currentPage === totalPages}
-            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+            className="px-3 py-1 rounded-md text-sm border bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             Last
           </button>
@@ -840,8 +847,84 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   );
 };
 
-interface ProductFilterProps {
-  products: FilterOption[]; // Now expects flat list of products
+// Define the structure for a node in the hierarchical product data
+interface ProductNode {
+  name: string;
+  id?: string; // Product ID, only present for leaf nodes (actual products)
+  children?: { [key: string]: ProductNode }; // Nested children
+}
+
+// Function to build the hierarchical product data from a flat list
+const buildProductHierarchy = (products: FilterOption[]): ProductNode => {
+  const hierarchy: ProductNode = {
+    name: "All Products", // Top-level node for "All Products"
+    children: {},
+  };
+
+  products.forEach((p) => {
+    let currentLevel = hierarchy.children;
+
+    // Subcategory 1
+    if (p.subcategory_1) {
+      if (!currentLevel![p.subcategory_1]) {
+        currentLevel![p.subcategory_1] = {
+          name: p.subcategory_1,
+          children: {},
+        };
+      }
+      currentLevel = currentLevel![p.subcategory_1].children;
+    }
+
+    // Reporting 2
+    if (p.reporting_2) {
+      if (!currentLevel![p.reporting_2]) {
+        currentLevel![p.reporting_2] = {
+          name: p.reporting_2,
+          children: {},
+        };
+      }
+      currentLevel = currentLevel![p.reporting_2].children;
+    }
+
+    // Piecategory 3
+    if (p.piecategory_3) {
+      if (!currentLevel![p.piecategory_3]) {
+        currentLevel![p.piecategory_3] = {
+          name: p.piecategory_3,
+          children: {},
+        };
+      }
+      currentLevel = currentLevel![p.piecategory_3].children;
+    }
+
+    // Reporting ID 4
+    if (p.reporting_id_4) {
+      if (!currentLevel![p.reporting_id_4]) {
+        currentLevel![p.reporting_id_4] = {
+          name: p.reporting_id_4,
+          children: {},
+        };
+      }
+      currentLevel = currentLevel![p.reporting_id_4].children;
+    }
+
+    // Product Name (Leaf node)
+    if (p.name && p.id) {
+      if (!currentLevel![p.name]) {
+        currentLevel![p.name] = {
+          name: p.name,
+          id: p.id,
+        };
+      }
+    }
+  });
+
+  return hierarchy;
+};
+
+// Props for the CascadingProductFilter component
+interface CascadingProductFilterProps {
+  products: FilterOption[];
   selectedProductHierarchy: {
     subcategory_1: string;
     reporting_2: string;
@@ -860,248 +943,275 @@ interface ProductFilterProps {
   ) => void;
 }
 
-const ProductFilter: React.FC<ProductFilterProps> = ({
+// Recursive component to render menu items and their sub-menus
+interface MenuItemProps {
+  node: ProductNode;
+  level: number;
+  onSelect: (
+    hierarchy: React.SetStateAction<{
+      subcategory_1: string;
+      reporting_2: string;
+      piecategory_3: string;
+      reporting_id_4: string;
+      productName: string;
+    }>
+  ) => void;
+  currentHierarchy: {
+    subcategory_1: string;
+    reporting_2: string;
+    piecategory_3: string;
+    reporting_id_4: string;
+    productName: string;
+  };
+  path: string[]; // To keep track of the current path in the hierarchy
+}
+
+const MenuItem: React.FC<MenuItemProps> = ({
+  node,
+  level,
+  onSelect,
+  currentHierarchy,
+  path,
+}) => {
+  const hasChildren = node.children && Object.keys(node.children).length > 0;
+  const [isHovered, setIsHovered] = useState(false); // State to manage hover for this specific item
+
+  const isSelected =
+    (level === 0 &&
+      node.name === "All Products" &&
+      currentHierarchy.subcategory_1 === "all") ||
+    (level === 1 &&
+      node.name === currentHierarchy.subcategory_1 &&
+      currentHierarchy.reporting_2 === "all") ||
+    (level === 2 &&
+      node.name === currentHierarchy.reporting_2 &&
+      currentHierarchy.piecategory_3 === "all") ||
+    (level === 3 &&
+      node.name === currentHierarchy.piecategory_3 &&
+      currentHierarchy.reporting_id_4 === "all") ||
+    (level === 4 &&
+      node.name === currentHierarchy.reporting_id_4 &&
+      currentHierarchy.productName === "all") ||
+    (level === 5 && node.id === currentHierarchy.productName);
+
+  const handleSelect = () => {
+    let newHierarchy = { ...currentHierarchy };
+
+    if (node.name === "All Products") {
+      newHierarchy = {
+        subcategory_1: "all",
+        reporting_2: "all",
+        piecategory_3: "all",
+        reporting_id_4: "all",
+        productName: "all",
+      };
+    } else if (level === 1) {
+      // subcategory_1
+      newHierarchy = {
+        subcategory_1: node.name,
+        reporting_2: "all",
+        piecategory_3: "all",
+        reporting_id_4: "all",
+        productName: "all",
+      };
+    } else if (level === 2) {
+      // reporting_2
+      newHierarchy = {
+        ...newHierarchy,
+        subcategory_1: path[0] || "all",
+        reporting_2: node.name,
+        piecategory_3: "all",
+        reporting_id_4: "all",
+        productName: "all",
+      };
+    } else if (level === 3) {
+      // piecategory_3
+      newHierarchy = {
+        ...newHierarchy,
+        subcategory_1: path[0] || "all",
+        reporting_2: path[1] || "all",
+        piecategory_3: node.name,
+        reporting_id_4: "all",
+        productName: "all",
+      };
+    } else if (level === 4) {
+      // reporting_id_4
+      newHierarchy = {
+        ...newHierarchy,
+        subcategory_1: path[0] || "all",
+        reporting_2: path[1] || "all",
+        piecategory_3: path[2] || "all",
+        reporting_id_4: node.name,
+        productName: "all",
+      };
+    } else if (level === 5 && node.id) {
+      // productName (leaf node)
+      newHierarchy = {
+        ...newHierarchy,
+        subcategory_1: path[0] || "all",
+        reporting_2: path[1] || "all",
+        piecategory_3: path[2] || "all",
+        reporting_id_4: path[3] || "all",
+        productName: node.id,
+      };
+    }
+    onSelect(newHierarchy);
+  };
+
+  return (
+    <li
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <button
+        onClick={handleSelect}
+        className={`flex items-center justify-between w-full px-4 py-2 text-left text-sm rounded-md transition-colors duration-150
+          ${
+            isSelected
+              ? "bg-indigo-600 text-white"
+              : "text-gray-700 hover:bg-gray-100"
+          }
+        `}
+      >
+        {node.name}
+        {hasChildren && (
+          <ChevronRight className="w-4 h-4 ml-2 text-gray-400 group-hover:text-white" />
+        )}
+      </button>
+      {hasChildren &&
+        isHovered && ( // Conditionally render based on isHovered
+          <ul className="absolute left-full top-0 mt-0 w-48 bg-white border border-gray-200 rounded-md shadow-lg block z-10">
+            <li className="relative">
+              <button
+                onClick={() => {
+                  let newHierarchy = { ...currentHierarchy };
+                  if (level === 0) {
+                    newHierarchy = {
+                      subcategory_1: "all",
+                      reporting_2: "all",
+                      piecategory_3: "all",
+                      reporting_id_4: "all",
+                      productName: "all",
+                    };
+                  } else if (level === 1) {
+                    newHierarchy = {
+                      ...newHierarchy,
+                      subcategory_1: "all",
+                      reporting_2: "all",
+                      piecategory_3: "all",
+                      reporting_id_4: "all",
+                      productName: "all",
+                    };
+                  } else if (level === 2) {
+                    newHierarchy = {
+                      ...newHierarchy,
+                      reporting_2: "all",
+                      piecategory_3: "all",
+                      reporting_id_4: "all",
+                      productName: "all",
+                    };
+                  } else if (level === 3) {
+                    newHierarchy = {
+                      ...newHierarchy,
+                      piecategory_3: "all",
+                      reporting_id_4: "all",
+                      productName: "all",
+                    };
+                  } else if (level === 4) {
+                    newHierarchy = {
+                      ...newHierarchy,
+                      reporting_id_4: "all",
+                      productName: "all",
+                    };
+                  }
+                  onSelect(newHierarchy);
+                }}
+                className={`flex items-center justify-between w-full px-4 py-2 text-left text-sm rounded-md transition-colors duration-150
+                ${
+                  (level === 0 && currentHierarchy.subcategory_1 === "all") ||
+                  (level === 1 &&
+                    currentHierarchy.subcategory_1 === "all" &&
+                    currentHierarchy.reporting_2 === "all") ||
+                  (level === 2 &&
+                    currentHierarchy.reporting_2 === "all" &&
+                    currentHierarchy.piecategory_3 === "all") ||
+                  (level === 3 &&
+                    currentHierarchy.piecategory_3 === "all" &&
+                    currentHierarchy.reporting_id_4 === "all") ||
+                  (level === 4 &&
+                    currentHierarchy.reporting_id_4 === "all" &&
+                    currentHierarchy.productName === "all")
+                    ? "bg-indigo-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }
+              `}
+              >
+                {`All ${node.name.replace("All Products", "Products")}`}
+              </button>
+            </li>
+            {Object.values(node.children || {}).map((childNode) => (
+              <MenuItem
+                key={childNode.name}
+                node={childNode}
+                level={level + 1}
+                onSelect={onSelect}
+                currentHierarchy={currentHierarchy}
+                path={[...path, childNode.name]}
+              />
+            ))}
+          </ul>
+        )}
+    </li>
+  );
+};
+
+const CascadingProductFilter: React.FC<CascadingProductFilterProps> = ({
   products,
   selectedProductHierarchy,
   onSelectProductHierarchy,
 }) => {
-  const {
-    subcategory_1,
-    reporting_2,
-    piecategory_3,
-    reporting_id_4,
-    productName,
-  } = selectedProductHierarchy;
-
-  const handleSelectChange = useCallback(
-    (level: string, value: string) => {
-      let newHierarchy = { ...selectedProductHierarchy };
-
-      if (level === "subcategory_1") {
-        newHierarchy = {
-          subcategory_1: value,
-          reporting_2: "all",
-          piecategory_3: "all",
-          reporting_id_4: "all",
-          productName: "all",
-        };
-      } else if (level === "reporting_2") {
-        newHierarchy = {
-          ...newHierarchy,
-          reporting_2: value,
-          piecategory_3: "all",
-          reporting_id_4: "all",
-          productName: "all",
-        };
-      } else if (level === "piecategory_3") {
-        newHierarchy = {
-          ...newHierarchy,
-          piecategory_3: value,
-          reporting_id_4: "all",
-          productName: "all",
-        };
-      } else if (level === "reporting_id_4") {
-        newHierarchy = {
-          ...newHierarchy,
-          reporting_id_4: value,
-          productName: "all",
-        };
-      } else if (level === "productName") {
-        newHierarchy = {
-          ...newHierarchy,
-          productName: value,
-        };
-      }
-      onSelectProductHierarchy(newHierarchy);
-    },
-    [onSelectProductHierarchy, selectedProductHierarchy]
+  const productHierarchy = useMemo(
+    () => buildProductHierarchy(products),
+    [products]
   );
 
-  const subcategoryOptions = useMemo(() => {
-    const unique = [...new Set(products.map((p) => p.subcategory_1))];
-    return ["all", ...unique.filter((subcat) => subcat != null)];
-  }, [products]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State for the main dropdown visibility
 
-  const reporting2Options = useMemo(() => {
-    const filteredProducts =
-      subcategory_1 === "all"
-        ? products
-        : products.filter((p) => p.subcategory_1 === subcategory_1);
-    const unique = [...new Set(filteredProducts.map((p) => p.reporting_2))];
-    return ["all", ...unique.filter((opt) => opt != null)];
-  }, [products, subcategory_1]);
-
-  const piecategory3Options = useMemo(() => {
-    let filteredProducts = products;
-    if (subcategory_1 !== "all")
-      filteredProducts = filteredProducts.filter(
-        (p) => p.subcategory_1 === subcategory_1
-      );
-    if (reporting_2 !== "all")
-      filteredProducts = filteredProducts.filter(
-        (p) => p.reporting_2 === reporting_2
-      );
-    const unique = [...new Set(filteredProducts.map((p) => p.piecategory_3))];
-    return ["all", ...unique.filter((opt) => opt != null)];
-  }, [products, subcategory_1, reporting_2]);
-
-  const reportingId4Options = useMemo(() => {
-    let filteredProducts = products;
-    if (subcategory_1 !== "all")
-      filteredProducts = filteredProducts.filter(
-        (p) => p.subcategory_1 === subcategory_1
-      );
-    if (reporting_2 !== "all")
-      filteredProducts = filteredProducts.filter(
-        (p) => p.reporting_2 === reporting_2
-      );
-    if (piecategory_3 !== "all")
-      filteredProducts = filteredProducts.filter(
-        (p) => p.piecategory_3 === piecategory_3
-      );
-    const unique = [...new Set(filteredProducts.map((p) => p.reporting_id_4))];
-    return ["all", ...unique.filter((opt) => opt != null)];
-  }, [products, subcategory_1, reporting_2, piecategory_3]);
-
-  const productNameOptions = useMemo(() => {
-    let filteredProducts = products;
-    if (subcategory_1 !== "all")
-      filteredProducts = filteredProducts.filter(
-        (p) => p.subcategory_1 === subcategory_1
-      );
-    if (reporting_2 !== "all")
-      filteredProducts = filteredProducts.filter(
-        (p) => p.reporting_2 === reporting_2
-      );
-    if (piecategory_3 !== "all")
-      filteredProducts = filteredProducts.filter(
-        (p) => p.piecategory_3 === piecategory_3
-      );
-    if (reporting_id_4 !== "all")
-      filteredProducts = filteredProducts.filter(
-        (p) => p.reporting_id_4 === reporting_id_4
-      );
-    // Ensure that the 'id' for productName is 'productid' from the backend
-    return [
-      { id: "all", name: "All Products" },
-      ...filteredProducts.map((p) => ({ id: p.id, name: p.name })),
-    ];
-  }, [products, subcategory_1, reporting_2, piecategory_3, reporting_id_4]);
+  const handleSelectProduct = useCallback(
+    (newHierarchy: {
+      subcategory_1: string;
+      reporting_2: string;
+      piecategory_3: string;
+      reporting_id_4: string;
+      productName: string;
+    }) => {
+      onSelectProductHierarchy(newHierarchy);
+      setIsDropdownOpen(false); // Close dropdown after selection
+    },
+    [onSelectProductHierarchy]
+  );
 
   return (
-    <div className="bg-white p-2 rounded-lg shadow-md mb-1">
-      <h3 className="text-lg font-semibold mb-2">Product Filter</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div>
-          <label
-            htmlFor="subcategory_1"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Subcategory 1
-          </label>
-          <select
-            id="subcategory_1"
-            value={subcategory_1}
-            onChange={(e) =>
-              handleSelectChange("subcategory_1", e.target.value)
-            }
-            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
-          >
-            {subcategoryOptions.map((option) => (
-              <option key={option} value={option}>
-                {option === "all" ? "All Subcategories" : option}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="reporting_2"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Reporting 2
-          </label>
-          <select
-            id="reporting_2"
-            value={reporting_2}
-            onChange={(e) => handleSelectChange("reporting_2", e.target.value)}
-            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
-            disabled={subcategory_1 === "all"}
-          >
-            {reporting2Options.map((option) => (
-              <option key={option} value={option}>
-                {option === "all" ? "All Reporting 2" : option}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="piecategory_3"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Piecategory 3
-          </label>
-          <select
-            id="piecategory_3"
-            value={piecategory_3}
-            onChange={(e) =>
-              handleSelectChange("piecategory_3", e.target.value)
-            }
-            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
-            disabled={reporting_2 === "all"}
-          >
-            {piecategory3Options.map((option) => (
-              <option key={option} value={option}>
-                {option === "all" ? "All Piecategory 3" : option}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="reporting_id_4"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Reporting ID 4
-          </label>
-          <select
-            id="reporting_id_4"
-            value={reporting_id_4}
-            onChange={(e) =>
-              handleSelectChange("reporting_id_4", e.target.value)
-            }
-            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
-            disabled={piecategory_3 === "all"}
-          >
-            {reportingId4Options.map((option) => (
-              <option key={option} value={option}>
-                {option === "all" ? "All Reporting ID 4" : option}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="productName"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Product Name
-          </label>
-          <select
-            id="productName"
-            value={productName}
-            onChange={(e) => handleSelectChange("productName", e.target.value)}
-            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
-            disabled={reporting_id_4 === "all"}
-          >
-            {productNameOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="rounded-lg shadow-sm border border-gray-200 mb-4 relative inline-block">
+      <div className="relative inline-block text-left">
+        <button
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)} // Toggle on click
+          className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+        >
+          Select Product
+        </button>
+        {isDropdownOpen && ( // Conditionally render main dropdown
+          <ul className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20 block">
+            <MenuItem
+              node={productHierarchy}
+              level={0}
+              onSelect={handleSelectProduct}
+              currentHierarchy={selectedProductHierarchy}
+              path={[]}
+            />
+          </ul>
+        )}
       </div>
     </div>
   );
@@ -1117,7 +1227,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState("sales");
 
   const [restaurants, setRestaurants] = useState<FilterOption[]>([]);
-  const [allProductsFlat, setAllProductsFlat] = useState<FilterOption[]>([]); // Renamed from 'products'
+  const [allProductsFlat, setAllProductsFlat] = useState<FilterOption[]>([]);
   const [machines, setMachines] = useState<FilterOption[]>([]);
   const [transactionTypes, setTransactionTypes] = useState<string[]>([]);
   const [deliveryChannels, setDeliveryChannels] = useState<string[]>([]);
@@ -1180,7 +1290,7 @@ export default function App() {
           throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         setRestaurants(data.restaurants);
-        setAllProductsFlat(data.allProductsFlat); // Use allProductsFlat
+        setAllProductsFlat(data.allProductsFlat);
         setMachines(data.machines);
         setTransactionTypes(data.transactionTypes);
         setDeliveryChannels(data.deliveryChannels);
@@ -1423,41 +1533,46 @@ export default function App() {
     selectedDeliveryChannel,
     selectedPod,
     currentView,
-    selectedProductHierarchy, // Include the new hierarchy state here
+    selectedProductHierarchy,
   ]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <header className="bg-white shadow-sm p-4 flex justify-between items-center">
+    <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
+      {" "}
+      {/* Added font-sans */}
+      <header className="bg-white shadow-md p-4 flex justify-between items-center border-b border-gray-200">
+        {" "}
+        {/* Adjusted shadow and added border */}
         <h1 className="text-2xl font-bold text-gray-800">
           Restaurant Analytics Dashboard
         </h1>
         <div className="flex space-x-4">
           <button
-            className={`px-4 py-2 rounded-md text-sm font-medium ${
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+              // Adjusted padding and rounded
               currentView === "sales"
-                ? "bg-indigo-500 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                ? "bg-indigo-600 text-white shadow-md" // Darker indigo, added shadow
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200" // Lighter gray, subtle hover
             }`}
             onClick={() => setCurrentView("sales")}
           >
             <BarChart2 className="inline-block mr-2" size={18} /> Sales Overview
           </button>
           <button
-            className={`px-4 py-2 rounded-md text-sm font-medium ${
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
               currentView === "product"
-                ? "bg-indigo-500 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             onClick={() => setCurrentView("product")}
           >
             <Coffee className="inline-block mr-2" size={18} /> Product Insights
           </button>
           <button
-            className={`px-4 py-2 rounded-md text-sm font-medium ${
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
               currentView === "store"
-                ? "bg-indigo-500 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             onClick={() => setCurrentView("store")}
           >
@@ -1465,13 +1580,16 @@ export default function App() {
           </button>
         </div>
       </header>
-
-      <main className="flex-1 p-2 overflow-y-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-2">
+      <main className="flex-1 p-6 overflow-y-auto">
+        {" "}
+        {/* Increased padding */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
+          {" "}
+          {/* Increased gap and margin-bottom */}
           <div>
             <label
               htmlFor="timePeriod"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2" // Adjusted margin-bottom
             >
               Time Period
             </label>
@@ -1480,7 +1598,7 @@ export default function App() {
                 id="timePeriod"
                 value={selectedTimePeriod}
                 onChange={(e) => setSelectedTimePeriod(e.target.value)}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border shadow-sm" // Added shadow
               >
                 <option value="today">Today</option>
                 <option value="yesterday">Yesterday</option>
@@ -1488,7 +1606,6 @@ export default function App() {
                 <option value="last30days">Last 30 Days</option>
                 <option value="thisMonth">This Month</option>
                 <option value="last3Months">Last 3 Months</option>
-                <option value="last6Months">Last 6 Months</option>
                 <option value="thisYear">This Year</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -1496,11 +1613,10 @@ export default function App() {
               </div>
             </div>
           </div>
-
           <div>
             <label
               htmlFor="restaurant"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               Restaurant
             </label>
@@ -1509,7 +1625,7 @@ export default function App() {
                 id="restaurant"
                 value={selectedRestaurant}
                 onChange={(e) => setSelectedRestaurant(e.target.value)}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border shadow-sm"
               >
                 <option value="all">All Restaurants</option>
                 {restaurants.map((r) => (
@@ -1523,13 +1639,21 @@ export default function App() {
               </div>
             </div>
           </div>
-
-          {/* Removed the simple "Product" dropdown, now using ProductFilter */}
-
+          {/* Cascading Product Filter */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Product Filter
+            </label>
+            <CascadingProductFilter
+              products={allProductsFlat}
+              selectedProductHierarchy={selectedProductHierarchy}
+              onSelectProductHierarchy={setSelectedProductHierarchy}
+            />
+          </div>
           <div>
             <label
               htmlFor="machine"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               Machine
             </label>
@@ -1538,7 +1662,7 @@ export default function App() {
                 id="machine"
                 value={selectedMachine}
                 onChange={(e) => setSelectedMachine(e.target.value)}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border shadow-sm"
               >
                 <option value="all">All Machines</option>
                 {machines.map((m) => (
@@ -1552,11 +1676,10 @@ export default function App() {
               </div>
             </div>
           </div>
-
           <div>
             <label
               htmlFor="transactionType"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               Transaction Type
             </label>
@@ -1565,7 +1688,7 @@ export default function App() {
                 id="transactionType"
                 value={selectedTransactionType}
                 onChange={(e) => setSelectedTransactionType(e.target.value)}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border shadow-sm"
               >
                 <option value="all">All Types</option>
                 {transactionTypes.map((type) => (
@@ -1579,11 +1702,10 @@ export default function App() {
               </div>
             </div>
           </div>
-
           <div>
             <label
               htmlFor="deliveryChannel"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               Delivery Channel
             </label>
@@ -1592,7 +1714,7 @@ export default function App() {
                 id="deliveryChannel"
                 value={selectedDeliveryChannel}
                 onChange={(e) => setSelectedDeliveryChannel(e.target.value)}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border shadow-sm"
               >
                 <option value="all">All Channels</option>
                 {deliveryChannels.map((channel) => (
@@ -1606,11 +1728,10 @@ export default function App() {
               </div>
             </div>
           </div>
-
           <div>
             <label
               htmlFor="pod"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               POD
             </label>
@@ -1619,7 +1740,7 @@ export default function App() {
                 id="pod"
                 value={selectedPod}
                 onChange={(e) => setSelectedPod(e.target.value)}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border"
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none bg-white border shadow-sm"
               >
                 <option value="all">All PODs</option>
                 {pods.map((p) => (
@@ -1634,26 +1755,18 @@ export default function App() {
             </div>
           </div>
         </div>
-
-        <ProductFilter
-          products={allProductsFlat}
-          selectedProductHierarchy={selectedProductHierarchy}
-          onSelectProductHierarchy={setSelectedProductHierarchy}
-        />
-
         {error && (
           <div
-            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+            className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative mb-4 shadow-sm"
             role="alert"
           >
             <strong className="font-bold">Error:</strong>
             <span className="block sm:inline"> {error}</span>
           </div>
         )}
-
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
           </div>
         ) : (
           <>
@@ -1697,9 +1810,8 @@ export default function App() {
             )}
           </>
         )}
-
         {/* Footer */}
-        <footer className="bg-white border-t border-gray-200 px-6 py-4 mt-auto">
+        <footer className="bg-white border-t border-gray-200 px-6 py-4 mt-auto shadow-sm">
           <div className="text-center text-sm text-gray-500">
             © {new Date().getFullYear()} Restaurant Analytics Dashboard. All
             rights reserved.
