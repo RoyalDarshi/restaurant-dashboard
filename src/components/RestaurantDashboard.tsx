@@ -37,6 +37,7 @@ import {
   Tag,
   ChevronRight,
   ChevronDown,
+  User, // New icon for OC/OM
 } from "lucide-react";
 
 const API_BASE_URL = "http://localhost:3001/api";
@@ -82,7 +83,7 @@ interface Transaction {
   machineId: string;
   transactionType: string;
   deliveryChannel: string;
-  pod: string;
+  pod: string; // Keeping pod for now in Transaction interface
   timestamp: number;
   amount: number;
   quantity: number;
@@ -495,13 +496,11 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
 interface StoreChartsProps {
   salesBySaleType: { name: string; value: number }[];
   salesByDeliveryChannel: { name: string; value: number }[];
-  salesByPod: { name: string; value: number }[];
 }
 
 const StoreCharts: React.FC<StoreChartsProps> = ({
   salesBySaleType,
   salesByDeliveryChannel,
-  salesByPod,
 }) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
     {salesBySaleType.length > 0 && (
@@ -620,66 +619,165 @@ const StoreCharts: React.FC<StoreChartsProps> = ({
         </div>
       </>
     )}
-    {salesByPod.length > 0 && (
-      <>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Payment Method (Bar Chart)
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart
-              layout="vertical"
-              data={salesByPod}
-              margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis
-                type="number"
-                stroke="#666"
-                formatter={(value: number) => formatIndianCurrency(value)}
-              />
-              <YAxis type="category" dataKey="name" stroke="#666" width={80} />
-              <Tooltip
-                formatter={(value: number) => formatIndianCurrency(value)}
-              />
-              <Legend />
-              <Bar dataKey="value" fill={COLORS[2]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">
-            Sales by Payment Method (Pie Chart)
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={salesByPod}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                fill="#8884d8"
-              >
-                {salesByPod.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value: number) => formatIndianCurrency(value)}
-              />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </>
-    )}
   </div>
 );
+
+interface OcOmStoreSummaryData {
+  storeName: string;
+  totalSales: number;
+  totalOrders: number;
+  avgOrderValue: number;
+  totalInvoices: number;
+}
+
+interface OcOmChartsProps {
+  salesByOcOmStoreSummary: OcOmStoreSummaryData[];
+  selectedOcOmFilterType: "all" | "oc" | "om";
+}
+
+const OcOmCharts: React.FC<OcOmChartsProps> = ({
+  salesByOcOmStoreSummary,
+  selectedOcOmFilterType,
+}) => {
+  if (
+    selectedOcOmFilterType === "all" ||
+    salesByOcOmStoreSummary.length === 0
+  ) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-4 text-center text-gray-600">
+        Please select an OC or OM to view store-wise performance.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      {/* Total Sales by Store */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h3 className="text-lg font-semibold mb-4 text-gray-700">
+          Total Sales by Store ({selectedOcOmFilterType === "oc" ? "OC" : "OM"}{" "}
+          View)
+        </h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            layout="vertical"
+            data={salesByOcOmStoreSummary}
+            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+            <XAxis
+              type="number"
+              stroke="#666"
+              formatter={(value: number) => formatIndianCurrency(value)}
+            />
+            <YAxis
+              type="category"
+              dataKey="storeName"
+              stroke="#666"
+              width={100}
+            />
+            <Tooltip
+              formatter={(value: number) => formatIndianCurrency(value)}
+            />
+            <Legend />
+            <Bar dataKey="totalSales" fill={COLORS[0]} name="Total Sales" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Total Orders by Store */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h3 className="text-lg font-semibold mb-4 text-gray-700">
+          Total Orders by Store ({selectedOcOmFilterType === "oc" ? "OC" : "OM"}{" "}
+          View)
+        </h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            layout="vertical"
+            data={salesByOcOmStoreSummary}
+            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+            <XAxis type="number" stroke="#666" />
+            <YAxis
+              type="category"
+              dataKey="storeName"
+              stroke="#666"
+              width={100}
+            />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="totalOrders" fill={COLORS[1]} name="Total Orders" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Average Order Value by Store */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h3 className="text-lg font-semibold mb-4 text-gray-700">
+          Average Order Value by Store (
+          {selectedOcOmFilterType === "oc" ? "OC" : "OM"} View)
+        </h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            layout="vertical"
+            data={salesByOcOmStoreSummary}
+            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+            <XAxis
+              type="number"
+              stroke="#666"
+              formatter={(value: number) => formatIndianCurrency(value)}
+            />
+            <YAxis
+              type="category"
+              dataKey="storeName"
+              stroke="#666"
+              width={100}
+            />
+            <Tooltip
+              formatter={(value: number) => formatIndianCurrency(value)}
+            />
+            <Legend />
+            <Bar
+              dataKey="avgOrderValue"
+              fill={COLORS[2]}
+              name="Avg. Order Value"
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Total Invoices by Store */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h3 className="text-lg font-semibold mb-4 text-gray-700">
+          Total GC by Store ({selectedOcOmFilterType === "oc" ? "OC" : "OM"}{" "}
+          View)
+        </h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            layout="vertical"
+            data={salesByOcOmStoreSummary}
+            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+            <XAxis type="number" stroke="#666" />
+            <YAxis
+              type="category"
+              dataKey="storeName"
+              stroke="#666"
+              width={100}
+            />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="totalInvoices" fill={COLORS[3]} name="Total GC" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
 
 interface TransactionsTableProps {
   filteredTransactions: Transaction[];
@@ -732,9 +830,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Delivery Channel
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                POD
-              </th>
+              {/* Removed POD column */}
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Amount
               </th>
@@ -767,9 +863,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {transaction.deliveryChannel}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.pod}
-                </td>
+                {/* Removed POD data cell */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatIndianCurrency(transaction.amount)}
                 </td>
@@ -1388,7 +1482,7 @@ const MenuItemStore: React.FC<MenuItemStoreProps> = ({
               onSelect={onSelect}
               currentHierarchy={currentHierarchy}
               path={[...path, childNode.name]}
-              closeDropdown={closeDropdown}
+              closeDropdown={() => setIsDropdownOpen(false)}
             />
           ))}
         </ul>
@@ -1471,7 +1565,11 @@ export default function App() {
   const [selectedMachine, setSelectedMachine] = useState("all");
   const [selectedTransactionType, setSelectedTransactionType] = useState("all");
   const [selectedDeliveryChannel, setSelectedDeliveryChannel] = useState("all");
-  const [selectedPod, setSelectedPod] = useState("all");
+  // Removed selectedPod state
+  const [selectedOcOmFilterType, setSelectedOcOmFilterType] = useState<
+    "all" | "oc" | "om"
+  >("all"); // New state for OC/OM filter type
+  const [selectedOcOmEmail, setSelectedOcOmEmail] = useState("all"); // New state for selected OC/OM email
   const [currentView, setCurrentView] = useState("sales");
 
   const [restaurants, setRestaurants] = useState<FilterOption[]>([]);
@@ -1480,7 +1578,9 @@ export default function App() {
   const [machines, setMachines] = useState<FilterOption[]>([]);
   const [transactionTypes, setTransactionTypes] = useState<string[]>([]);
   const [deliveryChannels, setDeliveryChannels] = useState<string[]>([]);
-  const [pods, setPods] = useState<string[]>([]);
+  // Removed pods state
+  const [ocEmailIds, setOcEmailIds] = useState<string[]>([]); // New state for OC emails
+  const [omEmailIds, setOmEmailIds] = useState<string[]>([]); // New state for OM emails
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -1516,9 +1616,12 @@ export default function App() {
   const [salesByDeliveryChannelData, setSalesByDeliveryChannelData] = useState<
     { name: string; value: number }[]
   >([]);
-  const [salesByPodData, setSalesByPodData] = useState<
-    { name: string; value: number }[]
-  >([]);
+  // Removed salesByPodData state
+  const [salesByOcOmStoreSummaryData, setSalesByOcOmStoreSummaryData] =
+    useState<
+      // New state for OC/OM store summary
+      OcOmStoreSummaryData[]
+    >([]);
   const [filteredTransactions, setFilteredTransactions] = useState<
     Transaction[]
   >([]);
@@ -1550,7 +1653,9 @@ export default function App() {
         setMachines(data.machines);
         setTransactionTypes(data.transactionTypes);
         setDeliveryChannels(data.deliveryChannels);
-        setPods(data.pods);
+        // setPods(data.pods); // Removed PODs
+        setOcEmailIds(data.ocEmailIds); // Set OC emails
+        setOmEmailIds(data.omEmailIds); // Set OM emails
       } catch (err: any) {
         console.error("Failed to fetch filter options:", err);
         setError("Failed to load filter options. " + err.message);
@@ -1581,7 +1686,6 @@ export default function App() {
           machineId: selectedMachine,
           transactionType: selectedTransactionType,
           deliveryChannel: selectedDeliveryChannel,
-          pod: selectedPod,
         };
 
         if (storeFilter) {
@@ -1620,6 +1724,16 @@ export default function App() {
           commonParams.product = JSON.stringify(productFilterParam);
         }
 
+        // Add OC and OM filters to commonParams based on selectedOcOmFilterType
+        if (selectedOcOmFilterType === "oc" && selectedOcOmEmail !== "all") {
+          commonParams.ocEmailId = selectedOcOmEmail;
+        } else if (
+          selectedOcOmFilterType === "om" &&
+          selectedOcOmEmail !== "all"
+        ) {
+          commonParams.omEmailId = selectedOcOmEmail;
+        }
+
         const queryString = new URLSearchParams(commonParams).toString();
 
         const summaryResponse = await fetch(
@@ -1629,6 +1743,18 @@ export default function App() {
           throw new Error(`Summary fetch failed: ${summaryResponse.status}`);
         const summary = await summaryResponse.json();
         setSummaryData(summary);
+
+        // Clear all chart data before fetching for the current view
+        setDailySalesData([]);
+        setHourlySalesData([]);
+        setSalesByRestaurantData([]);
+        setSalesByProductData([]);
+        setSalesByProductDescriptionData([]);
+        setSalesByItemFamilyGroupData([]);
+        setSalesByItemDayPartData([]);
+        setSalesBySaleTypeData([]);
+        setSalesByDeliveryChannelData([]);
+        setSalesByOcOmStoreSummaryData([]);
 
         if (currentView === "sales") {
           const dailyResponse = await fetch(
@@ -1670,13 +1796,6 @@ export default function App() {
               `Sales by product fetch failed: ${byProductResponse.status}`
             );
           setSalesByProductData(await byProductResponse.json());
-
-          setSalesByProductDescriptionData([]);
-          setSalesByItemFamilyGroupData([]);
-          setSalesByItemDayPartData([]);
-          setSalesBySaleTypeData([]);
-          setSalesByDeliveryChannelData([]);
-          setSalesByPodData([]);
         } else if (currentView === "product") {
           const byProductDescriptionResponse = await fetch(
             `${API_BASE_URL}/product/by-description?${queryString}`
@@ -1706,14 +1825,6 @@ export default function App() {
               `Sales by item day part fetch failed: ${byDayPartResponse.status}`
             );
           setSalesByItemDayPartData(await byDayPartResponse.json());
-
-          setDailySalesData([]);
-          setHourlySalesData([]);
-          setSalesByRestaurantData([]);
-          setSalesByProductData([]);
-          setSalesBySaleTypeData([]);
-          setSalesByDeliveryChannelData([]);
-          setSalesByPodData([]);
         } else if (currentView === "store") {
           const bySaleTypeResponse = await fetch(
             `${API_BASE_URL}/sales/by-sale-type?${queryString}`
@@ -1732,23 +1843,22 @@ export default function App() {
               `Sales by delivery channel fetch failed: ${byDeliveryChannelResponse.status}`
             );
           setSalesByDeliveryChannelData(await byDeliveryChannelResponse.json());
-
-          const byPodResponse = await fetch(
-            `${API_BASE_URL}/sales/by-pod?${queryString}`
-          );
-          if (!byPodResponse.ok)
-            throw new Error(
-              `Sales by POD fetch failed: ${byPodResponse.status}`
+        } else if (currentView === "oc_om") {
+          // New view for OC/OM
+          if (selectedOcOmFilterType !== "all" && selectedOcOmEmail !== "all") {
+            const ocOmStoreSummaryResponse = await fetch(
+              `${API_BASE_URL}/sales/by-oc-om-store-summary?${queryString}`
             );
-          setSalesByPodData(await byPodResponse.json());
-
-          setDailySalesData([]);
-          setHourlySalesData([]);
-          setSalesByRestaurantData([]);
-          setSalesByProductData([]);
-          setSalesByProductDescriptionData([]);
-          setSalesByItemFamilyGroupData([]);
-          setSalesByItemDayPartData([]);
+            if (!ocOmStoreSummaryResponse.ok)
+              throw new Error(
+                `Sales by OC/OM store summary fetch failed: ${ocOmStoreSummaryResponse.status}`
+              );
+            setSalesByOcOmStoreSummaryData(
+              await ocOmStoreSummaryResponse.json()
+            );
+          } else {
+            setSalesByOcOmStoreSummaryData([]);
+          }
         }
 
         const transactionsResponse = await fetch(
@@ -1780,7 +1890,7 @@ export default function App() {
         setSalesByItemDayPartData([]);
         setSalesBySaleTypeData([]);
         setSalesByDeliveryChannelData([]);
-        setSalesByPodData([]);
+        setSalesByOcOmStoreSummaryData([]);
         setFilteredTransactions([]);
       } finally {
         setLoading(false);
@@ -1793,11 +1903,17 @@ export default function App() {
     selectedMachine,
     selectedTransactionType,
     selectedDeliveryChannel,
-    selectedPod,
+    selectedOcOmFilterType, // Added to dependencies
+    selectedOcOmEmail, // Added to dependencies
     currentView,
     selectedProductHierarchy,
     selectedStoreHierarchy,
   ]);
+
+  // Reset selectedOcOmEmail when selectedOcOmFilterType changes
+  useEffect(() => {
+    setSelectedOcOmEmail("all");
+  }, [selectedOcOmFilterType]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
@@ -1837,6 +1953,16 @@ export default function App() {
             }`}
           >
             Store Analytics
+          </button>
+          <button
+            onClick={() => setCurrentView("oc_om")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+              currentView === "oc_om"
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            OC/OM View
           </button>
         </nav>
       </header>
@@ -1918,21 +2044,45 @@ export default function App() {
               ))}
             </select>
           </div>
+          {/* OC/OM Filter Type Dropdown */}
           <div className="flex items-center space-x-2">
-            <ReceiptText className="text-gray-500" />
+            <User className="text-gray-500" />
             <select
-              value={selectedPod}
-              onChange={(e) => setSelectedPod(e.target.value)}
+              value={selectedOcOmFilterType}
+              onChange={(e) =>
+                setSelectedOcOmFilterType(e.target.value as "all" | "oc" | "om")
+              }
               className="rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              <option value="all">All PODs</option>
-              {pods.map((pod) => (
-                <option key={pod} value={pod}>
-                  {pod}
-                </option>
-              ))}
+              <option value="all">All OC/OMs</option>
+              <option value="oc">Operations Consultant (OC)</option>
+              <option value="om">Operations Manager (OM)</option>
             </select>
           </div>
+          {/* Conditional OC/OM Email Dropdown */}
+          {(selectedOcOmFilterType === "oc" ||
+            selectedOcOmFilterType === "om") && (
+            <div className="flex items-center space-x-2">
+              <User className="text-gray-500" />
+              <select
+                value={selectedOcOmEmail}
+                onChange={(e) => setSelectedOcOmEmail(e.target.value)}
+                className="rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <option value="all">
+                  All {selectedOcOmFilterType === "oc" ? "OCs" : "OMs"}
+                </option>
+                {(selectedOcOmFilterType === "oc"
+                  ? ocEmailIds
+                  : omEmailIds
+                ).map((email) => (
+                  <option key={email} value={email}>
+                    {email}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         {loading ? (
           <div className="flex justify-center items-center h-64">
@@ -1967,7 +2117,12 @@ export default function App() {
               <StoreCharts
                 salesBySaleType={salesBySaleTypeData}
                 salesByDeliveryChannel={salesByDeliveryChannelData}
-                salesByPod={salesByPodData}
+              />
+            )}
+            {currentView === "oc_om" && ( // Render new OC/OM charts
+              <OcOmCharts
+                salesByOcOmStoreSummary={salesByOcOmStoreSummaryData}
+                selectedOcOmFilterType={selectedOcOmFilterType}
               />
             )}
             <TransactionsTable filteredTransactions={filteredTransactions} />
