@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import {
   LineChart,
   Line,
@@ -30,6 +36,7 @@ import {
   Truck,
   Tag,
   ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 
 const API_BASE_URL = "http://localhost:3001/api";
@@ -53,11 +60,18 @@ const COLORS = [
 const formatIndianCurrency = (value: number) => {
   if (value === null || value === undefined) return "N/A";
   if (value >= 10000000)
-    return `₹${(value / 10000000).toLocaleString(undefined, { maximumFractionDigits: 2 })} Cr`;
+    return `₹${(value / 10000000).toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+    })} Cr`;
   else if (value >= 100000)
-    return `₹${(value / 100000).toLocaleString(undefined, { maximumFractionDigits: 2 })} L`;
+    return `₹${(value / 100000).toLocaleString(undefined, {
+      maximumFractionDigits: 2,
+    })} L`;
   else
-    return `₹${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `₹${value.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 };
 
 interface Transaction {
@@ -95,15 +109,28 @@ interface CardProps {
   color?: string;
 }
 
-const Card: React.FC<CardProps> = ({ title, value, icon, description, color = "text-indigo-600" }) => (
+const Card: React.FC<CardProps> = ({
+  title,
+  value,
+  icon,
+  description,
+  color = "text-indigo-600",
+}) => (
   <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center space-x-4 hover:shadow-md transition-shadow duration-200">
-    <div className={`p-3 rounded-full bg-opacity-15 ${color.replace("text-", "bg-")}`}>
+    <div
+      className={`p-3 rounded-full bg-opacity-15 ${color.replace(
+        "text-",
+        "bg-"
+      )}`}
+    >
       {icon}
     </div>
     <div>
       <p className="text-gray-500 text-sm font-medium">{title}</p>
       <p className="text-2xl font-semibold text-gray-800">{value}</p>
-      {description && <p className="text-gray-400 text-xs mt-1">{description}</p>}
+      {description && (
+        <p className="text-gray-400 text-xs mt-1">{description}</p>
+      )}
     </div>
   </div>
 );
@@ -172,22 +199,38 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
 }) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <h3 className="text-lg font-semibold mb-4 text-gray-700">Daily Sales Performance</h3>
+      <h3 className="text-lg font-semibold mb-4 text-gray-700">
+        Daily Sales Performance
+      </h3>
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={dailySales} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+        <LineChart
+          data={dailySales}
+          margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
           <XAxis dataKey="name" stroke="#666" />
           <YAxis stroke="#666" />
           <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
           <Legend />
-          <Line type="monotone" dataKey="sales" stroke={COLORS[0]} strokeWidth={2} dot={false} />
+          <Line
+            type="monotone"
+            dataKey="sales"
+            stroke={COLORS[0]}
+            strokeWidth={2}
+            dot={false}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <h3 className="text-lg font-semibold mb-4 text-gray-700">Hourly Sales Distribution</h3>
+      <h3 className="text-lg font-semibold mb-4 text-gray-700">
+        Hourly Sales Distribution
+      </h3>
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={hourlySales} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+        <BarChart
+          data={hourlySales}
+          margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
           <XAxis dataKey="name" stroke="#666" />
           <YAxis stroke="#666" />
@@ -199,7 +242,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
     </div>
     {selectedStoreHierarchy.state === "all" && salesByRestaurant.length > 0 && (
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-1">
-        <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales Breakdown by Restaurant</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-700">
+          Sales Breakdown by Restaurant
+        </h3>
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
@@ -210,13 +255,20 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
               cy="50%"
               outerRadius={100}
               fill="#8884d8"
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              label={({ name, percent }) =>
+                `${name} ${(percent * 100).toFixed(0)}%`
+              }
             >
               {salesByRestaurant.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+            <Tooltip
+              formatter={(value: number) => formatIndianCurrency(value)}
+            />
             <Legend />
           </PieChart>
         </ResponsiveContainer>
@@ -224,13 +276,25 @@ const SalesCharts: React.FC<SalesChartsProps> = ({
     )}
     {salesByProduct.length > 0 && (
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-1">
-        <h3 className="text-lg font-semibold mb-4 text-gray-700">Top Selling Products</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-700">
+          Top Selling Products
+        </h3>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart layout="vertical" data={salesByProduct} margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
+          <BarChart
+            layout="vertical"
+            data={salesByProduct}
+            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis type="number" stroke="#666" formatter={(value: number) => formatIndianCurrency(value)} />
+            <XAxis
+              type="number"
+              stroke="#666"
+              formatter={(value: number) => formatIndianCurrency(value)}
+            />
             <YAxis type="category" dataKey="name" stroke="#666" width={80} />
-            <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+            <Tooltip
+              formatter={(value: number) => formatIndianCurrency(value)}
+            />
             <Legend />
             <Bar dataKey="value" fill={COLORS[3]} />
           </BarChart>
@@ -255,7 +319,9 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
     {salesByProductDescription.length > 0 && (
       <>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-1">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Product-wise Sales Overview (Bar Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Product-wise Sales Overview (Bar Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
               layout="vertical"
@@ -263,16 +329,24 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
               margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis type="number" stroke="#666" formatter={(value: number) => formatIndianCurrency(value)} />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <YAxis type="category" dataKey="name" stroke="#666" width={150} />
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
               <Bar dataKey="value" fill={COLORS[4]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-1">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Product-wise Sales Overview (Pie Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Product-wise Sales Overview (Pie Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -285,10 +359,15 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
                 fill="#8884d8"
               >
                 {salesByProductDescription.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -297,28 +376,55 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
     {salesByItemFamilyGroup.length > 0 && (
       <>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales by Product Category (Bar Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Product Category (Bar Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart layout="vertical" data={salesByItemFamilyGroup} margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
+            <BarChart
+              layout="vertical"
+              data={salesByItemFamilyGroup}
+              margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis type="number" stroke="#666" formatter={(value: number) => formatIndianCurrency(value)} />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <YAxis type="category" dataKey="name" stroke="#666" width={150} />
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
               <Bar dataKey="value" fill={COLORS[5]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales by Product Category (Pie Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Product Category (Pie Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={salesByItemFamilyGroup} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8">
+              <Pie
+                data={salesByItemFamilyGroup}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+              >
                 {salesByItemFamilyGroup.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -328,28 +434,55 @@ const ProductCharts: React.FC<ProductChartsProps> = ({
     {salesByItemDayPart.length > 0 && (
       <>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales by Day Part (Bar Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Day Part (Bar Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart layout="vertical" data={salesByItemDayPart} margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
+            <BarChart
+              layout="vertical"
+              data={salesByItemDayPart}
+              margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis type="number" stroke="#666" formatter={(value: number) => formatIndianCurrency(value)} />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <YAxis type="category" dataKey="name" stroke="#666" width={150} />
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
               <Bar dataKey="value" fill={COLORS[6]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales by Day Part (Pie Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Day Part (Pie Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={salesByItemDayPart} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8">
+              <Pie
+                data={salesByItemDayPart}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+              >
                 {salesByItemDayPart.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -365,33 +498,64 @@ interface StoreChartsProps {
   salesByPod: { name: string; value: number }[];
 }
 
-const StoreCharts: React.FC<StoreChartsProps> = ({ salesBySaleType, salesByDeliveryChannel, salesByPod }) => (
+const StoreCharts: React.FC<StoreChartsProps> = ({
+  salesBySaleType,
+  salesByDeliveryChannel,
+  salesByPod,
+}) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
     {salesBySaleType.length > 0 && (
       <>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales by Transaction Type (Bar Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Transaction Type (Bar Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart layout="vertical" data={salesBySaleType} margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
+            <BarChart
+              layout="vertical"
+              data={salesBySaleType}
+              margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis type="number" stroke="#666" formatter={(value: number) => formatIndianCurrency(value)} />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <YAxis type="category" dataKey="name" stroke="#666" width={80} />
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
               <Bar dataKey="value" fill={COLORS[0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales by Transaction Type (Pie Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Transaction Type (Pie Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={salesBySaleType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8">
+              <Pie
+                data={salesBySaleType}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+              >
                 {salesBySaleType.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -401,7 +565,9 @@ const StoreCharts: React.FC<StoreChartsProps> = ({ salesBySaleType, salesByDeliv
     {salesByDeliveryChannel.length > 0 && (
       <>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales by Delivery Method (Bar Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Delivery Method (Bar Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
               layout="vertical"
@@ -409,16 +575,24 @@ const StoreCharts: React.FC<StoreChartsProps> = ({ salesBySaleType, salesByDeliv
               margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis type="number" stroke="#666" formatter={(value: number) => formatIndianCurrency(value)} />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <YAxis type="category" dataKey="name" stroke="#666" width={80} />
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
               <Bar dataKey="value" fill={COLORS[1]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales by Delivery Method (Pie Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Delivery Method (Pie Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -431,10 +605,15 @@ const StoreCharts: React.FC<StoreChartsProps> = ({ salesBySaleType, salesByDeliv
                 fill="#8884d8"
               >
                 {salesByDeliveryChannel.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -444,28 +623,55 @@ const StoreCharts: React.FC<StoreChartsProps> = ({ salesBySaleType, salesByDeliv
     {salesByPod.length > 0 && (
       <>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales by Payment Method (Bar Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Payment Method (Bar Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart layout="vertical" data={salesByPod} margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
+            <BarChart
+              layout="vertical"
+              data={salesByPod}
+              margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis type="number" stroke="#666" formatter={(value: number) => formatIndianCurrency(value)} />
+              <XAxis
+                type="number"
+                stroke="#666"
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <YAxis type="category" dataKey="name" stroke="#666" width={80} />
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
               <Bar dataKey="value" fill={COLORS[2]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Sales by Payment Method (Pie Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Sales by Payment Method (Pie Chart)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={salesByPod} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8">
+              <Pie
+                data={salesByPod}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+              >
                 {salesByPod.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => formatIndianCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatIndianCurrency(value)}
+              />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -479,13 +685,18 @@ interface TransactionsTableProps {
   filteredTransactions: Transaction[];
 }
 
-const TransactionsTable: React.FC<TransactionsTableProps> = ({ filteredTransactions }) => {
+const TransactionsTable: React.FC<TransactionsTableProps> = ({
+  filteredTransactions,
+}) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredTransactions.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredTransactions.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
@@ -493,43 +704,87 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ filteredTransacti
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
-      <h3 className="text-lg font-semibold mb-4 text-gray-700">Transactions Detail</h3>
+      <h3 className="text-lg font-semibold mb-4 text-gray-700">
+        Transactions Detail
+      </h3>
       <div className="overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Restaurant</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Product</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Machine</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Delivery Channel</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">POD</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantity</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                ID
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Date
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Restaurant
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Product
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Machine
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Type
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Delivery Channel
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                POD
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Amount
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Quantity
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentItems.map((transaction) => (
               <tr key={transaction.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(transaction.timestamp).toLocaleString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{transaction.restaurantId}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{transaction.productName}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{transaction.machineId}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{transaction.transactionType}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{transaction.deliveryChannel}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{transaction.pod}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatIndianCurrency(transaction.amount)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{transaction.quantity}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {transaction.id}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {new Date(transaction.timestamp).toLocaleString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.restaurantId}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.productName}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.machineId}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.transactionType}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.deliveryChannel}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.pod}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {formatIndianCurrency(transaction.amount)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {transaction.quantity}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <div className="px-6 py-4 flex items-center justify-between">
-        <p className="text-sm text-gray-700 sm:mb-0">Page {currentPage} of {totalPages}</p>
+        <p className="text-sm text-gray-700 sm:mb-0">
+          Page {currentPage} of {totalPages}
+        </p>
         <nav className="flex space-x-1" aria-label="Pagination">
           <button
             onClick={() => paginate(1)}
@@ -546,13 +801,21 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ filteredTransacti
             Prev
           </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter((page) => totalPages <= 5 ? true : Math.abs(currentPage - page) <= 1 || page === 1 || page === totalPages)
+            .filter((page) =>
+              totalPages <= 5
+                ? true
+                : Math.abs(currentPage - page) <= 1 ||
+                  page === 1 ||
+                  page === totalPages
+            )
             .map((page, index, arr) => {
               const prevPage = arr[index - 1];
               const showEllipsis = prevPage && page - prevPage > 1;
               return (
                 <React.Fragment key={page}>
-                  {showEllipsis && <span className="px-2 py-1 text-sm text-gray-400">...</span>}
+                  {showEllipsis && (
+                    <span className="px-2 py-1 text-sm text-gray-400">...</span>
+                  )}
                   <button
                     onClick={() => paginate(page)}
                     className={`px-3 py-1 rounded-md text-sm border ${
@@ -598,7 +861,10 @@ const buildProductHierarchy = (products: FilterOption[]): ProductNode => {
     let currentLevel = hierarchy.children;
     if (p.subcategory_1) {
       if (!currentLevel![p.subcategory_1]) {
-        currentLevel![p.subcategory_1] = { name: p.subcategory_1, children: {} };
+        currentLevel![p.subcategory_1] = {
+          name: p.subcategory_1,
+          children: {},
+        };
       }
       currentLevel = currentLevel![p.subcategory_1].children;
     }
@@ -610,13 +876,19 @@ const buildProductHierarchy = (products: FilterOption[]): ProductNode => {
     }
     if (p.piecategory_3) {
       if (!currentLevel![p.piecategory_3]) {
-        currentLevel![p.piecategory_3] = { name: p.piecategory_3, children: {} };
+        currentLevel![p.piecategory_3] = {
+          name: p.piecategory_3,
+          children: {},
+        };
       }
       currentLevel = currentLevel![p.piecategory_3].children;
     }
     if (p.reporting_id_4) {
       if (!currentLevel![p.reporting_id_4]) {
-        currentLevel![p.reporting_id_4] = { name: p.reporting_id_4, children: {} };
+        currentLevel![p.reporting_id_4] = {
+          name: p.reporting_id_4,
+          children: {},
+        };
       }
       currentLevel = currentLevel![p.reporting_id_4].children;
     }
@@ -700,75 +972,171 @@ interface MenuItemProps {
     productName: string;
   };
   path: string[];
+  closeDropdown: () => void;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ node, level, onSelect, currentHierarchy, path }) => {
+const MenuItem: React.FC<MenuItemProps> = ({
+  node,
+  level,
+  onSelect,
+  currentHierarchy,
+  path,
+  closeDropdown,
+}) => {
   const hasChildren = node.children && Object.keys(node.children).length > 0;
   const [isHovered, setIsHovered] = useState(false);
 
   const isSelected =
-    (level === 0 && node.name === "All Products" && currentHierarchy.subcategory_1 === "all") ||
-    (level === 1 && node.name === currentHierarchy.subcategory_1 && currentHierarchy.reporting_2 === "all") ||
-    (level === 2 && node.name === currentHierarchy.reporting_2 && currentHierarchy.piecategory_3 === "all") ||
-    (level === 3 && node.name === currentHierarchy.piecategory_3 && currentHierarchy.reporting_id_4 === "all") ||
-    (level === 4 && node.name === currentHierarchy.reporting_id_4 && currentHierarchy.productName === "all") ||
+    (level === 0 &&
+      node.name === "All Products" &&
+      currentHierarchy.subcategory_1 === "all") ||
+    (level === 1 &&
+      node.name === currentHierarchy.subcategory_1 &&
+      currentHierarchy.reporting_2 === "all") ||
+    (level === 2 &&
+      node.name === currentHierarchy.reporting_2 &&
+      currentHierarchy.piecategory_3 === "all") ||
+    (level === 3 &&
+      node.name === currentHierarchy.piecategory_3 &&
+      currentHierarchy.reporting_id_4 === "all") ||
+    (level === 4 &&
+      node.name === currentHierarchy.reporting_id_4 &&
+      currentHierarchy.productName === "all") ||
     (level === 5 && node.id === currentHierarchy.productName);
 
   const handleSelect = () => {
     let newHierarchy = { ...currentHierarchy };
     if (node.name === "All Products") {
-      newHierarchy = { subcategory_1: "all", reporting_2: "all", piecategory_3: "all", reporting_id_4: "all", productName: "all" };
+      newHierarchy = {
+        subcategory_1: "all",
+        reporting_2: "all",
+        piecategory_3: "all",
+        reporting_id_4: "all",
+        productName: "all",
+      };
     } else if (level === 1) {
-      newHierarchy = { subcategory_1: node.name, reporting_2: "all", piecategory_3: "all", reporting_id_4: "all", productName: "all" };
+      newHierarchy = {
+        subcategory_1: node.name,
+        reporting_2: "all",
+        piecategory_3: "all",
+        reporting_id_4: "all",
+        productName: "all",
+      };
     } else if (level === 2) {
-      newHierarchy = { ...newHierarchy, subcategory_1: path[0] || "all", reporting_2: node.name, piecategory_3: "all", reporting_id_4: "all", productName: "all" };
+      newHierarchy = {
+        ...newHierarchy,
+        subcategory_1: path[0] || "all",
+        reporting_2: node.name,
+        piecategory_3: "all",
+        reporting_id_4: "all",
+        productName: "all",
+      };
     } else if (level === 3) {
-      newHierarchy = { ...newHierarchy, subcategory_1: path[0] || "all", reporting_2: path[1] || "all", piecategory_3: node.name, reporting_id_4: "all", productName: "all" };
+      newHierarchy = {
+        ...newHierarchy,
+        subcategory_1: path[0] || "all",
+        reporting_2: path[1] || "all",
+        piecategory_3: node.name,
+        reporting_id_4: "all",
+        productName: "all",
+      };
     } else if (level === 4) {
-      newHierarchy = { ...newHierarchy, subcategory_1: path[0] || "all", reporting_2: path[1] || "all", piecategory_3: path[2] || "all", reporting_id_4: node.name, productName: "all" };
+      newHierarchy = {
+        ...newHierarchy,
+        subcategory_1: path[0] || "all",
+        reporting_2: path[1] || "all",
+        piecategory_3: path[2] || "all",
+        reporting_id_4: node.name,
+        productName: "all",
+      };
     } else if (level === 5 && node.id) {
-      newHierarchy = { ...newHierarchy, subcategory_1: path[0] || "all", reporting_2: path[1] || "all", piecategory_3: path[2] || "all", reporting_id_4: path[3] || "all", productName: node.id };
+      newHierarchy = {
+        ...newHierarchy,
+        subcategory_1: path[0] || "all",
+        reporting_2: path[1] || "all",
+        piecategory_3: path[2] || "all",
+        reporting_id_4: path[3] || "all",
+        productName: node.id,
+      };
     }
     onSelect(newHierarchy);
+    if (!hasChildren) {
+      closeDropdown();
+    }
+  };
+
+  const handleSelectAll = (currentLevel: number) => {
+    let newHierarchy = { ...currentHierarchy };
+    if (currentLevel === 0) {
+      newHierarchy = {
+        subcategory_1: "all",
+        reporting_2: "all",
+        piecategory_3: "all",
+        reporting_id_4: "all",
+        productName: "all",
+      };
+    } else if (currentLevel === 1) {
+      newHierarchy = {
+        ...newHierarchy,
+        reporting_2: "all",
+        piecategory_3: "all",
+        reporting_id_4: "all",
+        productName: "all",
+      };
+    } else if (currentLevel === 2) {
+      newHierarchy = {
+        ...newHierarchy,
+        piecategory_3: "all",
+        reporting_id_4: "all",
+        productName: "all",
+      };
+    } else if (currentLevel === 3) {
+      newHierarchy = {
+        ...newHierarchy,
+        reporting_id_4: "all",
+        productName: "all",
+      };
+    } else if (currentLevel === 4) {
+      newHierarchy = { ...newHierarchy, productName: "all" };
+    }
+    onSelect(newHierarchy);
+    closeDropdown();
   };
 
   return (
-    <li className="relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+    <li
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <button
         onClick={handleSelect}
         className={`flex items-center justify-between w-full px-4 py-2 text-left text-sm rounded-md transition-colors duration-150
-          ${isSelected ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+          ${
+            isSelected
+              ? "bg-indigo-600 text-white"
+              : "text-gray-700 hover:bg-gray-100"
+          }`}
       >
         {node.name}
-        {hasChildren && <ChevronRight className="w-4 h-4 ml-2 text-gray-400 group-hover:text-white" />}
+        {hasChildren && (
+          <ChevronRight className="w-4 h-4 ml-2 text-gray-400 group-hover:text-white" />
+        )}
       </button>
       {hasChildren && isHovered && (
         <ul className="absolute left-full top-0 mt-0 w-48 bg-white border border-gray-200 rounded-md shadow-lg block z-10">
           <li className="relative">
             <button
-              onClick={() => {
-                let newHierarchy = { ...currentHierarchy };
-                if (level === 0) {
-                  newHierarchy = { subcategory_1: "all", reporting_2: "all", piecategory_3: "all", reporting_id_4: "all", productName: "all" };
-                } else if (level === 1) {
-                  newHierarchy = { ...newHierarchy, reporting_2: "all", piecategory_3: "all", reporting_id_4: "all", productName: "all" };
-                } else if (level === 2) {
-                  newHierarchy = { ...newHierarchy, piecategory_3: "all", reporting_id_4: "all", productName: "all" };
-                } else if (level === 3) {
-                  newHierarchy = { ...newHierarchy, reporting_id_4: "all", productName: "all" };
-                } else if (level === 4) {
-                  newHierarchy = { ...newHierarchy, productName: "all" };
-                }
-                onSelect(newHierarchy);
-              }}
+              onClick={() => handleSelectAll(level)}
               className={`flex items-center justify-between w-full px-4 py-2 text-left text-sm rounded-md transition-colors duration-150
-                ${(level === 0 && currentHierarchy.subcategory_1 === "all") ||
+                ${
+                  (level === 0 && currentHierarchy.subcategory_1 === "all") ||
                   (level === 1 && currentHierarchy.reporting_2 === "all") ||
                   (level === 2 && currentHierarchy.piecategory_3 === "all") ||
                   (level === 3 && currentHierarchy.reporting_id_4 === "all") ||
                   (level === 4 && currentHierarchy.productName === "all")
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-indigo-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
             >
               {`All ${node.name.replace("All Products", "Products")}`}
@@ -782,6 +1150,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ node, level, onSelect, currentHiera
               onSelect={onSelect}
               currentHierarchy={currentHierarchy}
               path={[...path, childNode.name]}
+              closeDropdown={closeDropdown}
             />
           ))}
         </ul>
@@ -795,38 +1164,83 @@ const CascadingProductFilter: React.FC<CascadingProductFilterProps> = ({
   selectedProductHierarchy,
   onSelectProductHierarchy,
 }) => {
-  const productHierarchy = useMemo(() => buildProductHierarchy(products), [products]);
+  const productHierarchy = useMemo(
+    () => buildProductHierarchy(products),
+    [products]
+  );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSelectProduct = useCallback(
-    (newHierarchy: { subcategory_1: string; reporting_2: string; piecategory_3: string; reporting_id_4: string; productName: string }) => {
+    (newHierarchy: {
+      subcategory_1: string;
+      reporting_2: string;
+      piecategory_3: string;
+      reporting_id_4: string;
+      productName: string;
+    }) => {
       onSelectProductHierarchy(newHierarchy);
       setIsDropdownOpen(false);
     },
     [onSelectProductHierarchy]
   );
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const getButtonText = () => {
+    const {
+      subcategory_1,
+      reporting_2,
+      piecategory_3,
+      reporting_id_4,
+      productName,
+    } = selectedProductHierarchy;
+    if (productName !== "all") {
+      const product = products.find((p) => p.id === productName);
+      return product ? product.name : "Select Product";
+    }
+    if (reporting_id_4 !== "all") return reporting_id_4;
+    if (piecategory_3 !== "all") return piecategory_3;
+    if (reporting_2 !== "all") return reporting_2;
+    if (subcategory_1 !== "all") return subcategory_1;
+    return "All Products";
+  };
+
   return (
-    <div className="rounded-lg shadow-sm border border-gray-200 mb-4 relative inline-block">
-      <div className="relative inline-block text-left">
-        <button
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-        >
-          Select Product
-        </button>
-        {isDropdownOpen && (
-          <ul className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20 block">
-            <MenuItem
-              node={productHierarchy}
-              level={0}
-              onSelect={handleSelectProduct}
-              currentHierarchy={selectedProductHierarchy}
-              path={[]}
-            />
-          </ul>
-        )}
-      </div>
+    <div className="relative inline-block text-left" ref={dropdownRef}>
+      <button
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        className="inline-flex justify-between items-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+      >
+        {getButtonText()}
+        <ChevronDown size={16} className="ml-2 -mr-1" />
+      </button>
+      {isDropdownOpen && (
+        <ul className="origin-top-right absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+          <MenuItem
+            node={productHierarchy}
+            level={0}
+            onSelect={handleSelectProduct}
+            currentHierarchy={selectedProductHierarchy}
+            path={[]}
+            closeDropdown={() => setIsDropdownOpen(false)}
+          />
+        </ul>
+      )}
     </div>
   );
 };
@@ -835,7 +1249,11 @@ interface CascadingStoreFilterProps {
   stores: FilterOption[];
   selectedStoreHierarchy: { state: string; city: string; storeName: string };
   onSelectStoreHierarchy: (
-    hierarchy: React.SetStateAction<{ state: string; city: string; storeName: string }>
+    hierarchy: React.SetStateAction<{
+      state: string;
+      city: string;
+      storeName: string;
+    }>
   ) => void;
 }
 
@@ -843,20 +1261,38 @@ interface MenuItemStoreProps {
   node: StoreNode;
   level: number;
   onSelect: (
-    hierarchy: React.SetStateAction<{ state: string; city: string; storeName: string }>
+    hierarchy: React.SetStateAction<{
+      state: string;
+      city: string;
+      storeName: string;
+    }>
   ) => void;
   currentHierarchy: { state: string; city: string; storeName: string };
   path: string[];
+  closeDropdown: () => void;
 }
 
-const MenuItemStore: React.FC<MenuItemStoreProps> = ({ node, level, onSelect, currentHierarchy, path }) => {
+const MenuItemStore: React.FC<MenuItemStoreProps> = ({
+  node,
+  level,
+  onSelect,
+  currentHierarchy,
+  path,
+  closeDropdown,
+}) => {
   const hasChildren = node.children && Object.keys(node.children).length > 0;
   const [isHovered, setIsHovered] = useState(false);
 
   const isSelected =
-    (level === 0 && node.name === "All Stores" && currentHierarchy.state === "all") ||
-    (level === 1 && node.name === currentHierarchy.state && currentHierarchy.city === "all") ||
-    (level === 2 && node.name === currentHierarchy.city && currentHierarchy.storeName === "all") ||
+    (level === 0 &&
+      node.name === "All Stores" &&
+      currentHierarchy.state === "all") ||
+    (level === 1 &&
+      node.name === currentHierarchy.state &&
+      currentHierarchy.city === "all") ||
+    (level === 2 &&
+      node.name === currentHierarchy.city &&
+      currentHierarchy.storeName === "all") ||
     (level === 3 && node.id === currentHierarchy.storeName);
 
   const handleSelect = () => {
@@ -866,44 +1302,79 @@ const MenuItemStore: React.FC<MenuItemStoreProps> = ({ node, level, onSelect, cu
     } else if (level === 1) {
       newHierarchy = { state: node.name, city: "all", storeName: "all" };
     } else if (level === 2) {
-      newHierarchy = { ...newHierarchy, state: path[0] || "all", city: node.name, storeName: "all" };
+      newHierarchy = {
+        ...newHierarchy,
+        state: path[0] || "all",
+        city: node.name,
+        storeName: "all",
+      };
     } else if (level === 3 && node.id) {
-      newHierarchy = { ...newHierarchy, state: path[0] || "all", city: path[1] || "all", storeName: node.id };
+      newHierarchy = {
+        ...newHierarchy,
+        state: path[0] || "all",
+        city: path[1] || "all",
+        storeName: node.id,
+      };
     }
     onSelect(newHierarchy);
+    if (!hasChildren) {
+      closeDropdown();
+    }
+  };
+
+  const handleSelectAll = (currentLevel: number) => {
+    let newHierarchy = { ...currentHierarchy };
+    if (currentLevel === 0) {
+      newHierarchy = {
+        state: "all",
+        city: "all",
+        storeName: "all",
+      };
+    } else if (currentLevel === 1) {
+      newHierarchy = {
+        ...newHierarchy,
+        city: "all",
+        storeName: "all",
+      };
+    } else if (currentLevel === 2) {
+      newHierarchy = { ...newHierarchy, storeName: "all" };
+    }
+    onSelect(newHierarchy);
+    closeDropdown();
   };
 
   return (
-    <li className="relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+    <li
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <button
         onClick={handleSelect}
         className={`flex items-center justify-between w-full px-4 py-2 text-left text-sm rounded-md transition-colors duration-150
-          ${isSelected ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+          ${
+            isSelected
+              ? "bg-indigo-600 text-white"
+              : "text-gray-700 hover:bg-gray-100"
+          }`}
       >
         {node.name}
-        {hasChildren && <ChevronRight className="w-4 h-4 ml-2 text-gray-400 group-hover:text-white" />}
+        {hasChildren && (
+          <ChevronRight className="w-4 h-4 ml-2 text-gray-400 group-hover:text-white" />
+        )}
       </button>
       {hasChildren && isHovered && (
         <ul className="absolute left-full top-0 mt-0 w-48 bg-white border border-gray-200 rounded-md shadow-lg block z-10">
           <li className="relative">
             <button
-              onClick={() => {
-                let newHierarchy = { ...currentHierarchy };
-                if (level === 0) {
-                  newHierarchy = { state: "all", city: "all", storeName: "all" };
-                } else if (level === 1) {
-                  newHierarchy = { ...newHierarchy, city: "all", storeName: "all" };
-                } else if (level === 2) {
-                  newHierarchy = { ...newHierarchy, storeName: "all" };
-                }
-                onSelect(newHierarchy);
-              }}
+              onClick={() => handleSelectAll(level)}
               className={`flex items-center justify-between w-full px-4 py-2 text-left text-sm rounded-md transition-colors duration-150
-                ${(level === 0 && currentHierarchy.state === "all") ||
+                ${
+                  (level === 0 && currentHierarchy.state === "all") ||
                   (level === 1 && currentHierarchy.city === "all") ||
                   (level === 2 && currentHierarchy.storeName === "all")
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-indigo-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
             >
               {`All ${node.name.replace("All Stores", "Stores")}`}
@@ -917,6 +1388,7 @@ const MenuItemStore: React.FC<MenuItemStoreProps> = ({ node, level, onSelect, cu
               onSelect={onSelect}
               currentHierarchy={currentHierarchy}
               path={[...path, childNode.name]}
+              closeDropdown={closeDropdown}
             />
           ))}
         </ul>
@@ -932,6 +1404,7 @@ const CascadingStoreFilter: React.FC<CascadingStoreFilterProps> = ({
 }) => {
   const storeHierarchy = useMemo(() => buildStoreHierarchy(stores), [stores]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSelectStore = useCallback(
     (newHierarchy: { state: string; city: string; storeName: string }) => {
@@ -941,27 +1414,54 @@ const CascadingStoreFilter: React.FC<CascadingStoreFilterProps> = ({
     [onSelectStoreHierarchy]
   );
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const getButtonText = () => {
+    const { state, city, storeName } = selectedStoreHierarchy;
+    if (storeName !== "all") {
+      const store = stores.find((s) => s.id === storeName);
+      return store ? store.name : "Select Store";
+    }
+    if (city !== "all") return city;
+    if (state !== "all") return state;
+    return "All Stores";
+  };
+
   return (
-    <div className="rounded-lg shadow-sm border border-gray-200 mb-4 relative inline-block">
-      <div className="relative inline-block text-left">
-        <button
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-        >
-          Select Store
-        </button>
-        {isDropdownOpen && (
-          <ul className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20 block">
-            <MenuItemStore
-              node={storeHierarchy}
-              level={0}
-              onSelect={handleSelectStore}
-              currentHierarchy={selectedStoreHierarchy}
-              path={[]}
-            />
-          </ul>
-        )}
-      </div>
+    <div className="relative inline-block text-left" ref={dropdownRef}>
+      <button
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        className="inline-flex justify-between items-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+      >
+        {getButtonText()}
+        <ChevronDown size={16} className="ml-2 -mr-1" />
+      </button>
+      {isDropdownOpen && (
+        <ul className="origin-top-right absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+          <MenuItemStore
+            node={storeHierarchy}
+            level={0}
+            onSelect={handleSelectStore}
+            currentHierarchy={selectedStoreHierarchy}
+            path={[]}
+            closeDropdown={() => setIsDropdownOpen(false)}
+          />
+        </ul>
+      )}
     </div>
   );
 };
@@ -990,17 +1490,38 @@ export default function App() {
     avgOrderValue: 0,
     totalInvoices: 0,
   });
-  const [dailySalesData, setDailySalesData] = useState<{ name: string; sales: number }[]>([]);
-  const [hourlySalesData, setHourlySalesData] = useState<{ name: string; sales: number }[]>([]);
-  const [salesByRestaurantData, setSalesByRestaurantData] = useState<{ name: string; value: number }[]>([]);
-  const [salesByProductData, setSalesByProductData] = useState<{ name: string; value: number }[]>([]);
-  const [salesByProductDescriptionData, setSalesByProductDescriptionData] = useState<{ name: string; value: number }[]>([]);
-  const [salesByItemFamilyGroupData, setSalesByItemFamilyGroupData] = useState<{ name: string; value: number }[]>([]);
-  const [salesByItemDayPartData, setSalesByItemDayPartData] = useState<{ name: string; value: number }[]>([]);
-  const [salesBySaleTypeData, setSalesBySaleTypeData] = useState<{ name: string; value: number }[]>([]);
-  const [salesByDeliveryChannelData, setSalesByDeliveryChannelData] = useState<{ name: string; value: number }[]>([]);
-  const [salesByPodData, setSalesByPodData] = useState<{ name: string; value: number }[]>([]);
-  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
+  const [dailySalesData, setDailySalesData] = useState<
+    { name: string; sales: number }[]
+  >([]);
+  const [hourlySalesData, setHourlySalesData] = useState<
+    { name: string; sales: number }[]
+  >([]);
+  const [salesByRestaurantData, setSalesByRestaurantData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesByProductData, setSalesByProductData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesByProductDescriptionData, setSalesByProductDescriptionData] =
+    useState<{ name: string; value: number }[]>([]);
+  const [salesByItemFamilyGroupData, setSalesByItemFamilyGroupData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesByItemDayPartData, setSalesByItemDayPartData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesBySaleTypeData, setSalesBySaleTypeData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesByDeliveryChannelData, setSalesByDeliveryChannelData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [salesByPodData, setSalesByPodData] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<
+    Transaction[]
+  >([]);
 
   const [selectedProductHierarchy, setSelectedProductHierarchy] = useState({
     subcategory_1: "all",
@@ -1020,7 +1541,8 @@ export default function App() {
     const fetchFilterOptions = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/mock-data`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         setRestaurants(data.restaurants);
         setAllProductsFlat(data.allProductsFlat);
@@ -1044,7 +1566,10 @@ export default function App() {
       try {
         let storeFilter: { type: string; value: string } | null = null;
         if (selectedStoreHierarchy.storeName !== "all") {
-          storeFilter = { type: "storecode", value: selectedStoreHierarchy.storeName };
+          storeFilter = {
+            type: "storecode",
+            value: selectedStoreHierarchy.storeName,
+          };
         } else if (selectedStoreHierarchy.city !== "all") {
           storeFilter = { type: "city", value: selectedStoreHierarchy.city };
         } else if (selectedStoreHierarchy.state !== "all") {
@@ -1065,15 +1590,30 @@ export default function App() {
 
         let productFilterParam: { type: string; value: string } | null = null;
         if (selectedProductHierarchy.productName !== "all") {
-          productFilterParam = { type: "productid", value: selectedProductHierarchy.productName };
+          productFilterParam = {
+            type: "productid",
+            value: selectedProductHierarchy.productName,
+          };
         } else if (selectedProductHierarchy.reporting_id_4 !== "all") {
-          productFilterParam = { type: "reporting_id_4", value: selectedProductHierarchy.reporting_id_4 };
+          productFilterParam = {
+            type: "reporting_id_4",
+            value: selectedProductHierarchy.reporting_id_4,
+          };
         } else if (selectedProductHierarchy.piecategory_3 !== "all") {
-          productFilterParam = { type: "piecategory_3", value: selectedProductHierarchy.piecategory_3 };
+          productFilterParam = {
+            type: "piecategory_3",
+            value: selectedProductHierarchy.piecategory_3,
+          };
         } else if (selectedProductHierarchy.reporting_2 !== "all") {
-          productFilterParam = { type: "reporting_2", value: selectedProductHierarchy.reporting_2 };
+          productFilterParam = {
+            type: "reporting_2",
+            value: selectedProductHierarchy.reporting_2,
+          };
         } else if (selectedProductHierarchy.subcategory_1 !== "all") {
-          productFilterParam = { type: "subcategory_1", value: selectedProductHierarchy.subcategory_1 };
+          productFilterParam = {
+            type: "subcategory_1",
+            value: selectedProductHierarchy.subcategory_1,
+          };
         }
 
         if (productFilterParam) {
@@ -1082,30 +1622,53 @@ export default function App() {
 
         const queryString = new URLSearchParams(commonParams).toString();
 
-        const summaryResponse = await fetch(`${API_BASE_URL}/sales/summary?${queryString}`);
-        if (!summaryResponse.ok) throw new Error(`Summary fetch failed: ${summaryResponse.status}`);
+        const summaryResponse = await fetch(
+          `${API_BASE_URL}/sales/summary?${queryString}`
+        );
+        if (!summaryResponse.ok)
+          throw new Error(`Summary fetch failed: ${summaryResponse.status}`);
         const summary = await summaryResponse.json();
         setSummaryData(summary);
 
         if (currentView === "sales") {
-          const dailyResponse = await fetch(`${API_BASE_URL}/sales/daily-trend?${queryString}`);
-          if (!dailyResponse.ok) throw new Error(`Daily sales fetch failed: ${dailyResponse.status}`);
+          const dailyResponse = await fetch(
+            `${API_BASE_URL}/sales/daily-trend?${queryString}`
+          );
+          if (!dailyResponse.ok)
+            throw new Error(
+              `Daily sales fetch failed: ${dailyResponse.status}`
+            );
           setDailySalesData(await dailyResponse.json());
 
-          const hourlyResponse = await fetch(`${API_BASE_URL}/sales/hourly-trend?${queryString}`);
-          if (!hourlyResponse.ok) throw new Error(`Hourly sales fetch failed: ${hourlyResponse.status}`);
+          const hourlyResponse = await fetch(
+            `${API_BASE_URL}/sales/hourly-trend?${queryString}`
+          );
+          if (!hourlyResponse.ok)
+            throw new Error(
+              `Hourly sales fetch failed: ${hourlyResponse.status}`
+            );
           setHourlySalesData(await hourlyResponse.json());
 
           if (selectedStoreHierarchy.state === "all") {
-            const byRestaurantResponse = await fetch(`${API_BASE_URL}/sales/by-restaurant?${queryString}`);
-            if (!byRestaurantResponse.ok) throw new Error(`Sales by restaurant fetch failed: ${byRestaurantResponse.status}`);
+            const byRestaurantResponse = await fetch(
+              `${API_BASE_URL}/sales/by-restaurant?${queryString}`
+            );
+            if (!byRestaurantResponse.ok)
+              throw new Error(
+                `Sales by restaurant fetch failed: ${byRestaurantResponse.status}`
+              );
             setSalesByRestaurantData(await byRestaurantResponse.json());
           } else {
             setSalesByRestaurantData([]);
           }
 
-          const byProductResponse = await fetch(`${API_BASE_URL}/sales/by-product?${queryString}`);
-          if (!byProductResponse.ok) throw new Error(`Sales by product fetch failed: ${byProductResponse.status}`);
+          const byProductResponse = await fetch(
+            `${API_BASE_URL}/sales/by-product?${queryString}`
+          );
+          if (!byProductResponse.ok)
+            throw new Error(
+              `Sales by product fetch failed: ${byProductResponse.status}`
+            );
           setSalesByProductData(await byProductResponse.json());
 
           setSalesByProductDescriptionData([]);
@@ -1115,16 +1678,33 @@ export default function App() {
           setSalesByDeliveryChannelData([]);
           setSalesByPodData([]);
         } else if (currentView === "product") {
-          const byProductDescriptionResponse = await fetch(`${API_BASE_URL}/product/by-description?${queryString}`);
-          if (!byProductDescriptionResponse.ok) throw new Error(`Sales by product description fetch failed: ${byProductDescriptionResponse.status}`);
-          setSalesByProductDescriptionData(await byProductDescriptionResponse.json());
+          const byProductDescriptionResponse = await fetch(
+            `${API_BASE_URL}/product/by-description?${queryString}`
+          );
+          if (!byProductDescriptionResponse.ok)
+            throw new Error(
+              `Sales by product description fetch failed: ${byProductDescriptionResponse.status}`
+            );
+          setSalesByProductDescriptionData(
+            await byProductDescriptionResponse.json()
+          );
 
-          const byFamilyGroupResponse = await fetch(`${API_BASE_URL}/product/by-family-group?${queryString}`);
-          if (!byFamilyGroupResponse.ok) throw new Error(`Sales by item family group fetch failed: ${byFamilyGroupResponse.status}`);
+          const byFamilyGroupResponse = await fetch(
+            `${API_BASE_URL}/product/by-family-group?${queryString}`
+          );
+          if (!byFamilyGroupResponse.ok)
+            throw new Error(
+              `Sales by item family group fetch failed: ${byFamilyGroupResponse.status}`
+            );
           setSalesByItemFamilyGroupData(await byFamilyGroupResponse.json());
 
-          const byDayPartResponse = await fetch(`${API_BASE_URL}/product/by-day-part?${queryString}`);
-          if (!byDayPartResponse.ok) throw new Error(`Sales by item day part fetch failed: ${byDayPartResponse.status}`);
+          const byDayPartResponse = await fetch(
+            `${API_BASE_URL}/product/by-day-part?${queryString}`
+          );
+          if (!byDayPartResponse.ok)
+            throw new Error(
+              `Sales by item day part fetch failed: ${byDayPartResponse.status}`
+            );
           setSalesByItemDayPartData(await byDayPartResponse.json());
 
           setDailySalesData([]);
@@ -1135,16 +1715,31 @@ export default function App() {
           setSalesByDeliveryChannelData([]);
           setSalesByPodData([]);
         } else if (currentView === "store") {
-          const bySaleTypeResponse = await fetch(`${API_BASE_URL}/sales/by-sale-type?${queryString}`);
-          if (!bySaleTypeResponse.ok) throw new Error(`Sales by sale type fetch failed: ${bySaleTypeResponse.status}`);
+          const bySaleTypeResponse = await fetch(
+            `${API_BASE_URL}/sales/by-sale-type?${queryString}`
+          );
+          if (!bySaleTypeResponse.ok)
+            throw new Error(
+              `Sales by sale type fetch failed: ${bySaleTypeResponse.status}`
+            );
           setSalesBySaleTypeData(await bySaleTypeResponse.json());
 
-          const byDeliveryChannelResponse = await fetch(`${API_BASE_URL}/sales/by-delivery-channel?${queryString}`);
-          if (!byDeliveryChannelResponse.ok) throw new Error(`Sales by delivery channel fetch failed: ${byDeliveryChannelResponse.status}`);
+          const byDeliveryChannelResponse = await fetch(
+            `${API_BASE_URL}/sales/by-delivery-channel?${queryString}`
+          );
+          if (!byDeliveryChannelResponse.ok)
+            throw new Error(
+              `Sales by delivery channel fetch failed: ${byDeliveryChannelResponse.status}`
+            );
           setSalesByDeliveryChannelData(await byDeliveryChannelResponse.json());
 
-          const byPodResponse = await fetch(`${API_BASE_URL}/sales/by-pod?${queryString}`);
-          if (!byPodResponse.ok) throw new Error(`Sales by POD fetch failed: ${byPodResponse.status}`);
+          const byPodResponse = await fetch(
+            `${API_BASE_URL}/sales/by-pod?${queryString}`
+          );
+          if (!byPodResponse.ok)
+            throw new Error(
+              `Sales by POD fetch failed: ${byPodResponse.status}`
+            );
           setSalesByPodData(await byPodResponse.json());
 
           setDailySalesData([]);
@@ -1156,13 +1751,26 @@ export default function App() {
           setSalesByItemDayPartData([]);
         }
 
-        const transactionsResponse = await fetch(`${API_BASE_URL}/sales?${queryString}`);
-        if (!transactionsResponse.ok) throw new Error(`Transactions fetch failed: ${transactionsResponse.status}`);
+        const transactionsResponse = await fetch(
+          `${API_BASE_URL}/sales?${queryString}`
+        );
+        if (!transactionsResponse.ok)
+          throw new Error(
+            `Transactions fetch failed: ${transactionsResponse.status}`
+          );
         setFilteredTransactions(await transactionsResponse.json());
       } catch (err: any) {
         console.error("Failed to fetch dashboard data:", err);
-        setError("Failed to load data. Please ensure the backend server is running and configured correctly. Error: " + err.message);
-        setSummaryData({ totalSales: 0, totalOrders: 0, avgOrderValue: 0, totalInvoices: 0 });
+        setError(
+          "Failed to load data. Please ensure the backend server is running and configured correctly. Error: " +
+            err.message
+        );
+        setSummaryData({
+          totalSales: 0,
+          totalOrders: 0,
+          avgOrderValue: 0,
+          totalInvoices: 0,
+        });
         setDailySalesData([]);
         setHourlySalesData([]);
         setSalesByRestaurantData([]);
@@ -1195,7 +1803,9 @@ export default function App() {
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
       <header className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-800">Restaurant Analytics Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Restaurant Analytics Dashboard
+          </h1>
         </div>
         <nav className="flex space-x-4">
           <button
